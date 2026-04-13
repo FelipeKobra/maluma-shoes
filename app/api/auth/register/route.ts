@@ -1,0 +1,10 @@
+import { register } from "@/app/services/auth.service";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function registerController(req: NextRequest) {
+  const body = await req.json();
+
+  const usuario = await register(body.nome, body.email, body.senha);
+
+  return NextResponse.json(usuario);
+}

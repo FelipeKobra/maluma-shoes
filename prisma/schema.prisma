@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["maluma"]
 }
 
 model Calcados {
@@ -24,6 +25,8 @@ model Calcados {
   dimensao          String              @db.VarChar(45)
   status            String              @db.VarChar(45)
   itensMovimentacao ItensMovimentacao[]
+
+  @@schema("maluma")
 }
 
 model OrdemMovimentacao {
@@ -36,6 +39,8 @@ model OrdemMovimentacao {
   status            String              @db.VarChar(45)
   valor_total       Decimal             @db.Decimal(12, 2)
   itensMovimentacao ItensMovimentacao[]
+
+  @@schema("maluma")
 }
 
 model ItensMovimentacao {
@@ -48,6 +53,8 @@ model ItensMovimentacao {
   calcados            Calcados          @relation(fields: [calcadosId], references: [id])
   ordemMovimentacao   OrdemMovimentacao @relation(fields: [ordemMovimentacaoId], references: [id])
   movimentacoes       Movimentacao[]
+
+  @@schema("maluma")
 }
 
 model PosicaoEstoque {
@@ -60,6 +67,8 @@ model PosicaoEstoque {
   ultima_contagem      DateTime
   para_mostruario      Boolean
   movimentacoes        Movimentacao[]
+
+  @@schema("maluma")
 }
 
 model Movimentacao {
@@ -74,4 +83,26 @@ model Movimentacao {
   posicaoEstoqueId    Int
   itensMovimentacao   ItensMovimentacao @relation(fields: [itensMovimentacaoId], references: [id])
   posicaoEstoque      PosicaoEstoque    @relation(fields: [posicaoEstoqueId], references: [id])
+
+  @@schema("maluma")
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  senha     String
+  role      Role     @default(OPERADOR)
+  createdAt DateTime @default(now())
+
+  @@map("usuarios")
+  @@schema("maluma")
+}
+
+enum Role {
+  ADMIN
+  OPERADOR
+  GESTOR
+
+  @@schema("maluma")
 }

@@ -1,3 +1,18 @@
 {
-  "cSpell.words": ["datasource", "postgresql"]
+  "cSpell.words": ["datasource", "postgresql"],
+  "sqltools.connections": [
+    {
+      "pgOptions": {
+        "ssl": {
+          "rejectUnauthorized": false
+        }
+      },
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "driver": "PostgreSQL",
+      "name": "Baron",
+      "connectString": "postgres://default:LSqDnFjr8HQ5@ep-autumn-leaf-a4dz9c0w-pooler.us-east-1.aws.neon.tech/verceldb?sslmode=require"
+    }
+  ]
 }
