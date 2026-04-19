@@ -1,6 +1,152 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buscarCalcados } from "@/app/services/calcados.service";
 
+/**
+ * @swagger
+ * /api/calcados/withFilter:
+ *   get:
+ *     summary: Listar calçados com filtros, paginação e ordenação
+ *     tags:
+ *       - Calcados
+ *
+ *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: integer
+ *         description: ID do calçado
+ *
+ *       - in: query
+ *         name: codigo_barras
+ *         schema:
+ *           type: string
+ *         description: Código de barras 
+ *
+ *       - in: query
+ *         name: modelo
+ *         schema:
+ *           type: string
+ *
+ *       - in: query
+ *         name: marca
+ *         schema:
+ *           type: string
+ *
+ *       - in: query
+ *         name: numeracao
+ *         schema:
+ *           type: integer
+ *
+ *       - in: query
+ *         name: cor_primaria
+ *         schema:
+ *           type: string
+ *
+ *       - in: query
+ *         name: cor_secundaria
+ *         schema:
+ *           type: string
+ *
+ *       - in: query
+ *         name: material
+ *         schema:
+ *           type: string
+ *
+ *       - in: query
+ *         name: genero
+ *         schema:
+ *           type: string
+ *           enum: [Masculino, Feminino, Unisex]
+ *
+ *       - in: query
+ *         name: categoria
+ *         schema:
+ *           type: string
+ *
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ATIVO, INATIVO]
+ *
+ *       - in: query
+ *         name: precoMin
+ *         schema:
+ *           type: number
+ *           format: float
+ *         description: Preço mínimo
+ *
+ *       - in: query
+ *         name: precoMax
+ *         schema:
+ *           type: number
+ *           format: float
+ *         description: Preço máximo
+ *
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Página atual
+ *
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Quantidade por página
+ *
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *           example: preco_venda
+ *         description: Campo para ordenação
+ *
+ *       - in: query
+ *         name: order
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
+ *         description: Direção da ordenação
+ *
+ *     responses:
+ *       200:
+ *         description: Lista de calçados filtrada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       modelo:
+ *                         type: string
+ *                       marca:
+ *                         type: string
+ *                       preco_venda:
+ *                         type: number
+ *
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *
+ *       500:
+ *         description: Erro interno no servidor
+ */
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;

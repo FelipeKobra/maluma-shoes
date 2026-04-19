@@ -62,6 +62,7 @@ export async function movimentarEstoque(data: MovimentacaoInput) {
   return movimentacao;
 }
 
+
 export const baixoEstoque = await prisma.posicaoEstoque.findMany({
   where: {
     quantidade_atual: {
