@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
  *     summary: Buscar calçado por ID
  *     tags:
  *       - Calcados
+ *
  *     parameters:
  *       - in: path
  *         name: id
@@ -15,6 +16,7 @@ import { NextResponse } from "next/server";
  *         schema:
  *           type: integer
  *         description: ID do calçado
+ *
  *     responses:
  *       200:
  *         description: Calçado encontrado com sucesso
@@ -25,16 +27,69 @@ import { NextResponse } from "next/server";
  *               properties:
  *                 id:
  *                   type: integer
+ *                   example: 1
+ *
+ *                 status:
+ *                   type: string
+ *                   example: "ATIVO"
+ *
+ *                 codigo_barras:
+ *                   type: string
+ *                   example: "7891234567890"
+ *
  *                 modelo:
  *                   type: string
+ *                   example: "Air Max"
+ *
  *                 marca:
  *                   type: string
+ *                   example: "Nike"
+ *
+ *                 descricao:
+ *                   type: string
+ *                   example: "Tênis esportivo confortável"
+ *
  *                 numeracao:
  *                   type: integer
- *                 preco:
+ *                   example: 42
+ *
+ *                 cor_primaria:
+ *                   type: string
+ *                   example: "Preto"
+ *
+ *                 cor_secundaria:
+ *                   type: string
+ *                   example: "Branco"
+ *
+ *                 material:
+ *                   type: string
+ *                   example: "Couro"
+ *
+ *                 genero:
+ *                   type: string
+ *                   example: "Masculino"
+ *
+ *                 categoria:
+ *                   type: string
+ *                   example: "Esportivo"
+ *
+ *                 preco_venda:
  *                   type: number
+ *                   format: float
+ *                   example: 299.90
+ *
+ *                 peso:
+ *                   type: number
+ *                   format: float
+ *                   example: 0.8
+ *
+ *                 dimensao:
+ *                   type: string
+ *                   example: "30x20x10 cm"
+ *
  *       404:
  *         description: Calçado não encontrado
+ *
  *       500:
  *         description: Erro interno no servidor
  */

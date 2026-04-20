@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/posicoes-estoque:
+ * /api/posicao-estoque:
  *   get:
  *     summary: Listar todas as posições de estoque
  *     tags:
@@ -46,7 +46,7 @@ export async function GET() {
 
 /**
  * @swagger
- * /api/posicoes-estoque:
+ * /api/posicao-estoque:
  *   post:
  *     summary: Criar uma nova posição de estoque
  *     tags:
@@ -59,20 +59,33 @@ export async function GET() {
  *           schema:
  *             type: object
  *             required:
+ *               - cod_localizacao
  *               - quantidade_atual
  *             properties:
+ *               cod_localizacao:
+ *                 type: string
+ *                 example: "A1-B2"
+ *
  *               quantidade_atual:
  *                 type: integer
  *                 example: 50
  *
- *               quantidade_minima:
+ *               quantidade_minimo:
  *                 type: integer
  *                 example: 10
+ *
+ *               quantidade_maximo:
+ *                 type: integer
+ *                 example: 100
  *
  *               ultima_contagem:
  *                 type: string
  *                 format: date-time
- *                 example: 2025-01-01T10:00:00Z
+ *                 example: "2026-04-20T10:00:00Z"
+ *
+ *               para_mostruario:
+ *                 type: boolean
+ *                 example: false
  *
  *     responses:
  *       201:
@@ -84,16 +97,38 @@ export async function GET() {
  *               properties:
  *                 id:
  *                   type: integer
+ *                   example: 1
+ *
+ *                 cod_localizacao:
+ *                   type: string
+ *                   example: "A1-B2"
  *
  *                 quantidade_atual:
  *                   type: integer
+ *                   example: 50
  *
- *                 quantidade_minima:
+ *                 quantidade_minimo:
  *                   type: integer
+ *                   example: 10
+ *
+ *                 quantidade_maximo:
+ *                   type: integer
+ *                   example: 100
+ *
+ *                 ultimo_abastecimento:
+ *                   type: string
+ *                   format: date-time
+ *                   nullable: true
+ *                   example: "2026-04-20T10:00:00Z"
  *
  *                 ultima_contagem:
  *                   type: string
  *                   format: date-time
+ *                   example: "2026-04-20T10:00:00Z"
+ *
+ *                 para_mostruario:
+ *                   type: boolean
+ *                   example: false
  *
  *       400:
  *         description: Dados inválidos

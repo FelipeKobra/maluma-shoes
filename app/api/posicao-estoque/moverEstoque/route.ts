@@ -46,7 +46,7 @@ import { movimentarEstoque } from "@/app/services/estoque.service";
  *
  *               responsavel:
  *                 type: string
- *                 example: Gabriel Santos
+ *                 example: "Gabriel Santos"
  *
  *     responses:
  *       200:
@@ -56,14 +56,42 @@ import { movimentarEstoque } from "@/app/services/estoque.service";
  *             schema:
  *               type: object
  *               properties:
- *                 movimentacao:
- *                   type: object
+ *                 id:
+ *                   type: integer
+ *                   example: 1
+ *
+ *                 data_hora:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2026-04-20T12:00:00Z"
+ *
+ *                 tipo:
+ *                   type: string
+ *                   example: "ENTRADA"
+ *
+ *                 motivo:
+ *                   type: string
+ *                   example: "Recebimento de mercadoria"
  *
  *                 saldo_anterior:
  *                   type: integer
+ *                   example: 10
  *
  *                 saldo_posterior:
  *                   type: integer
+ *                   example: 15
+ *
+ *                 responsavel:
+ *                   type: string
+ *                   example: "Gabriel Santos"
+ *
+ *                 itensMovimentacaoId:
+ *                   type: integer
+ *                   example: 10
+ *
+ *                 posicaoEstoqueId:
+ *                   type: integer
+ *                   example: 1
  *
  *       400:
  *         description: Erro de validação ou regra de negócio

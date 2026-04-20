@@ -45,12 +45,27 @@ import { NextRequest, NextResponse } from "next/server";
  *                 id:
  *                   type: integer
  *                   example: 1
+ *
  *                 nome:
  *                   type: string
  *                   example: "Gabriel Santos"
+ *
  *                 email:
  *                   type: string
  *                   example: "usuario@email.com"
+ *
+ *                 role:
+ *                   type: string
+ *                   example: "USER"
+ *
+ *                 senha:
+ *                   type: string
+ *                   example: "$2b$10$hashbcrypt..."
+ *
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2026-04-20T12:00:00Z"
  *
  *       400:
  *         description: Dados inválidos ou usuário já existe

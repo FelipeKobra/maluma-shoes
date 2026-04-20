@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/ordens-movimentacao/{id}:
+ * /api/ordem-movimentacao/{id}:
  *   get:
  *     summary: Buscar ordem de movimentação por ID
  *     tags:
@@ -78,7 +78,7 @@ export async function GET(
 
 /**
  * @swagger
- * /api/ordens-movimentacao/{id}:
+ * /api/ordem-movimentacao/{id}:
  *   put:
  *     summary: Atualizar ordem de movimentação
  *     tags:
@@ -187,7 +187,7 @@ export async function PUT(
 
 /**
  * @swagger
- * /api/ordens-movimentacao/{id}:
+ * /api/ordem-movimentacao/{id}:
  *   delete:
  *     summary: Deletar uma ordem de movimentação
  *     tags:

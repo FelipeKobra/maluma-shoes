@@ -42,19 +42,6 @@ import { login } from "@/app/services/auth.service";
  *                   type: string
  *                   example: "jwt.token.aqui"
  *
- *                 usuario:
- *                   type: object
- *                   properties:
- *                     id:
- *                       type: integer
- *                       example: 1
- *                     nome:
- *                       type: string
- *                       example: "Gabriel"
- *                     email:
- *                       type: string
- *                       example: "usuario@email.com"
- *
  *       401:
  *         description: Credenciais inválidas
  *

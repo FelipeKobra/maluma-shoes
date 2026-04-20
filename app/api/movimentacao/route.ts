@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/movimentacoes:
+ * /api/movimentacao:
  *   get:
  *     summary: Listar todas as movimentações
  *     tags:
@@ -67,7 +67,7 @@ export async function GET() {
 
 /**
  * @swagger
- * /api/movimentacoes:
+ * /api/movimentacao:
  *   post:
  *     summary: Criar uma nova movimentação de estoque
  *     tags:

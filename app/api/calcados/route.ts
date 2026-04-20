@@ -181,6 +181,14 @@ export async function GET() {
  *                   type: integer
  *                   example: 1
  *
+ *                 status:
+ *                   type: string
+ *                   example: "ATIVO"
+ *
+ *                 codigo_barras:
+ *                   type: string
+ *                   example: "1234567890123"
+ *
  *                 modelo:
  *                   type: string
  *                   example: "Air Max"
@@ -189,9 +197,47 @@ export async function GET() {
  *                   type: string
  *                   example: "Nike"
  *
+ *                 descricao:
+ *                   type: string
+ *                   example: "Tênis esportivo"
+ *
+ *                 numeracao:
+ *                   type: integer
+ *                   example: 42
+ *
+ *                 cor_primaria:
+ *                   type: string
+ *                   example: "Preto"
+ *
+ *                 cor_secundaria:
+ *                   type: string
+ *                   example: "Branco"
+ *
+ *                 material:
+ *                   type: string
+ *                   example: "Couro"
+ *
+ *                 genero:
+ *                   type: string
+ *                   example: "Masculino"
+ *
+ *                 categoria:
+ *                   type: string
+ *                   example: "Esportivo"
+ *
  *                 preco_venda:
  *                   type: number
+ *                   format: float
  *                   example: 499.9
+ *
+ *                 peso:
+ *                   type: number
+ *                   format: float
+ *                   example: 0.8
+ *
+ *                 dimensao:
+ *                   type: string
+ *                   example: "30x20x10"
  *
  *       400:
  *         description: Dados inválidos

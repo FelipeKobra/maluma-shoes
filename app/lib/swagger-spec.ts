@@ -6,7 +6,7 @@ const options: swaggerJsdoc.Options = {
     info: {
       title: "Maluma Shoes API",
       version: "1.0.0",
-      description: "Documentação do sistema",
+      description: "Documentação Maluma Shoes ",
     },
     components: {
       securitySchemes: {

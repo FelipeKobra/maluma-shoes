@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/movimentacoes/{id}:
+ * /api/movimentacao/{id}:
  *   get:
  *     summary: Buscar movimentação por ID
  *     tags:
@@ -80,7 +80,7 @@ export async function GET(
 
 /**
  * @swagger
- * /api/movimentacoes/{id}:
+ * /api/movimentacao/{id}:
  *   put:
  *     summary: Atualizar movimentação
  *     tags:
@@ -191,7 +191,7 @@ export async function PUT(
 
 /**
  * @swagger
- * /api/movimentacoes/{id}:
+ * /api/movimentacao/{id}:
  *   delete:
  *     summary: Deletar uma movimentação
  *     tags:

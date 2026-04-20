@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/estoque/baixo:
+ * /api/posicao-estoque/minimo:
  *   get:
  *     summary: Listar itens com baixo estoque
  *     tags:
@@ -19,25 +19,40 @@ import { NextResponse } from "next/server";
  *               items:
  *                 type: object
  *                 properties:
- *                   posicaoEstoqueId:
+ *                   id:
  *                     type: integer
  *                     example: 1
  *
- *                   produto:
+ *                   cod_localizacao:
  *                     type: string
- *                     example: "Tênis Nike Air Max"
+ *                     example: "A1-B2"
  *
  *                   quantidade_atual:
  *                     type: integer
  *                     example: 3
  *
- *                   quantidade_minima:
+ *                   quantidade_minimo:
  *                     type: integer
  *                     example: 10
  *
- *                   status:
+ *                   quantidade_maximo:
+ *                     type: integer
+ *                     example: 50
+ *
+ *                   ultimo_abastecimento:
  *                     type: string
- *                     example: BAIXO_ESTOQUE
+ *                     format: date-time
+ *                     nullable: true
+ *                     example: "2026-04-18T10:00:00Z"
+ *
+ *                   ultima_contagem:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2026-04-19T15:00:00Z"
+ *
+ *                   para_mostruario:
+ *                     type: boolean
+ *                     example: false
  *
  *       500:
  *         description: Erro interno no servidor

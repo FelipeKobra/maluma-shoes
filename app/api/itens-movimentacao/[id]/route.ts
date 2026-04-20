@@ -29,25 +29,27 @@ import { NextResponse } from "next/server";
  *                   type: integer
  *                   example: 1
  *
- *                 produto_id:
- *                   type: integer
- *                   example: 10
+ *                 preco_unitario:
+ *                   type: number
+ *                   format: float
+ *                   example: 99.90
  *
  *                 quantidade:
  *                   type: integer
  *                   example: 5
  *
- *                 tipo:
- *                   type: string
- *                   example: "ENTRADA"
+ *                 subtotal:
+ *                   type: number
+ *                   format: float
+ *                   example: 499.50
  *
- *                 data_hora:
- *                   type: string
- *                   format: date-time
+ *                 calcadosId:
+ *                   type: integer
+ *                   example: 10
  *
- *                 observacao:
- *                   type: string
- *                   example: "Entrada de estoque"
+ *                 ordemMovimentacaoId:
+ *                   type: integer
+ *                   example: 20
  *
  *       404:
  *         description: Item não encontrado

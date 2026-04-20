@@ -4,7 +4,7 @@ import { buscarHistoricoMovimentacoes } from "@/app/services/movimentacao.servic
 
 /**
  * @swagger
- * /api/movimentacoes/historico:
+ * /api/movimentacao/historico:
  *   get:
  *     summary: Listar histórico de movimentações com filtros
  *     tags:
@@ -23,14 +23,12 @@ import { buscarHistoricoMovimentacoes } from "@/app/services/movimentacao.servic
  *         schema:
  *           type: string
  *           example: Gabriel
- *         description: Nome do responsável
  *
  *       - in: query
  *         name: motivo
  *         schema:
  *           type: string
  *           example: Inventário
- *         description: Motivo da movimentação
  *
  *       - in: query
  *         name: dataInicio
@@ -38,7 +36,6 @@ import { buscarHistoricoMovimentacoes } from "@/app/services/movimentacao.servic
  *           type: string
  *           format: date-time
  *           example: 2025-01-01T00:00:00Z
- *         description: Data inicial do filtro
  *
  *       - in: query
  *         name: dataFim
@@ -46,21 +43,18 @@ import { buscarHistoricoMovimentacoes } from "@/app/services/movimentacao.servic
  *           type: string
  *           format: date-time
  *           example: 2025-12-31T23:59:59Z
- *         description: Data final do filtro
  *
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
  *           default: 1
- *         description: Página atual
  *
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
  *           default: 10
- *         description: Quantidade de itens por página
  *
  *     responses:
  *       200:
@@ -77,27 +71,107 @@ import { buscarHistoricoMovimentacoes } from "@/app/services/movimentacao.servic
  *                     properties:
  *                       id:
  *                         type: integer
- *
- *                       tipo:
- *                         type: string
- *                         example: AJUSTE
- *
- *                       motivo:
- *                         type: string
- *                         example: Inventário físico realizado
- *
- *                       saldo_anterior:
- *                         type: integer
- *
- *                       saldo_posterior:
- *                         type: integer
- *
- *                       responsavel:
- *                         type: string
+ *                         example: 1
  *
  *                       data_hora:
  *                         type: string
  *                         format: date-time
+ *                         example: "2026-04-20T12:00:00Z"
+ *
+ *                       tipo:
+ *                         type: string
+ *                         example: "AJUSTE"
+ *
+ *                       motivo:
+ *                         type: string
+ *                         example: "Inventário físico"
+ *
+ *                       saldo_anterior:
+ *                         type: integer
+ *                         example: 10
+ *
+ *                       saldo_posterior:
+ *                         type: integer
+ *                         example: 8
+ *
+ *                       responsavel:
+ *                         type: string
+ *                         example: "Gabriel"
+ *
+ *                       itensMovimentacaoId:
+ *                         type: integer
+ *                         example: 5
+ *
+ *                       posicaoEstoqueId:
+ *                         type: integer
+ *                         example: 3
+ *
+ *                       itensMovimentacao:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                             example: 5
+ *
+ *                           preco_unitario:
+ *                             type: number
+ *                             format: float
+ *                             example: 99.90
+ *
+ *                           quantidade:
+ *                             type: integer
+ *                             example: 2
+ *
+ *                           subtotal:
+ *                             type: number
+ *                             format: float
+ *                             example: 199.80
+ *
+ *                           calcadosId:
+ *                             type: integer
+ *                             example: 10
+ *
+ *                           ordemMovimentacaoId:
+ *                             type: integer
+ *                             example: 1
+ *
+ *                       posicaoEstoque:
+ *                         type: object
+ *                         properties:
+ *                           id:
+ *                             type: integer
+ *                             example: 3
+ *
+ *                           cod_localizacao:
+ *                             type: string
+ *                             example: "A1-B2"
+ *
+ *                           quantidade_atual:
+ *                             type: integer
+ *                             example: 8
+ *
+ *                           quantidade_minimo:
+ *                             type: integer
+ *                             example: 5
+ *
+ *                           quantidade_maximo:
+ *                             type: integer
+ *                             example: 20
+ *
+ *                           ultimo_abastecimento:
+ *                             type: string
+ *                             format: date-time
+ *                             nullable: true
+ *                             example: "2026-04-18T10:00:00Z"
+ *
+ *                           ultima_contagem:
+ *                             type: string
+ *                             format: date-time
+ *                             example: "2026-04-19T15:00:00Z"
+ *
+ *                           para_mostruario:
+ *                             type: boolean
+ *                             example: false
  *
  *                 meta:
  *                   type: object
@@ -114,8 +188,20 @@ import { buscarHistoricoMovimentacoes } from "@/app/services/movimentacao.servic
  *                       type: integer
  *                       example: 10
  *
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 10
+ *
  *       500:
  *         description: Erro interno no servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "An unknown error occurred"
  */
 export async function GET(req: NextRequest) {
   try {

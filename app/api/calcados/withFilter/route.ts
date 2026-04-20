@@ -20,7 +20,7 @@ import { buscarCalcados } from "@/app/services/calcados.service";
  *         name: codigo_barras
  *         schema:
  *           type: string
- *         description: Código de barras 
+ *         description: Código de barras
  *
  *       - in: query
  *         name: modelo
@@ -127,22 +127,84 @@ import { buscarCalcados } from "@/app/services/calcados.service";
  *                     properties:
  *                       id:
  *                         type: integer
+ *                         example: 1
+ *
+ *                       status:
+ *                         type: string
+ *                         example: "ATIVO"
+ *
+ *                       codigo_barras:
+ *                         type: string
+ *                         example: "7891234567890"
+ *
  *                       modelo:
  *                         type: string
+ *                         example: "Air Max"
+ *
  *                       marca:
  *                         type: string
+ *                         example: "Nike"
+ *
+ *                       descricao:
+ *                         type: string
+ *                         example: "Tênis esportivo confortável"
+ *
+ *                       numeracao:
+ *                         type: integer
+ *                         example: 42
+ *
+ *                       cor_primaria:
+ *                         type: string
+ *                         example: "Preto"
+ *
+ *                       cor_secundaria:
+ *                         type: string
+ *                         example: "Branco"
+ *
+ *                       material:
+ *                         type: string
+ *                         example: "Couro"
+ *
+ *                       genero:
+ *                         type: string
+ *                         example: "Masculino"
+ *
+ *                       categoria:
+ *                         type: string
+ *                         example: "Esportivo"
+ *
  *                       preco_venda:
  *                         type: number
+ *                         format: float
+ *                         example: 299.90
+ *
+ *                       peso:
+ *                         type: number
+ *                         format: float
+ *                         example: 0.8
+ *
+ *                       dimensao:
+ *                         type: string
+ *                         example: "30x20x10 cm"
  *
  *                 meta:
  *                   type: object
  *                   properties:
  *                     total:
  *                       type: integer
+ *                       example: 100
+ *
  *                     page:
  *                       type: integer
+ *                       example: 1
+ *
  *                     limit:
  *                       type: integer
+ *                       example: 10
+ *
+ *                     totalPages:
+ *                       type: integer
+ *                       example: 10
  *
  *       500:
  *         description: Erro interno no servidor

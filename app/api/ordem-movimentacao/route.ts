@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 /**
  * @swagger
- * /api/ordens-movimentacao:
+ * /api/ordem-movimentacao:
  *   get:
  *     summary: Listar todas as ordens de movimentação
  *     tags:
@@ -62,7 +62,7 @@ export async function GET() {
 
 /**
  * @swagger
- * /api/ordens-movimentacao:
+ * /api/ordem-movimentacao:
  *   post:
  *     summary: Criar uma nova ordem de movimentação
  *     tags:

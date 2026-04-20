@@ -24,12 +24,12 @@ import { criarUsuario } from "@/app/services/usuario.service";
  *             properties:
  *               nome:
  *                 type: string
- *                 example: Gabriel Santos
+ *                 example: "Gabriel Santos"
  *
  *               email:
  *                 type: string
  *                 format: email
- *                 example: gabriel@email.com
+ *                 example: "gabriel@email.com"
  *
  *               senha:
  *                 type: string
@@ -39,7 +39,7 @@ import { criarUsuario } from "@/app/services/usuario.service";
  *               role:
  *                 type: string
  *                 enum: [ADMIN, OPERADOR, GESTOR]
- *                 example: OPERADOR
+ *                 example: "OPERADOR"
  *
  *     responses:
  *       201:
@@ -51,15 +51,28 @@ import { criarUsuario } from "@/app/services/usuario.service";
  *               properties:
  *                 id:
  *                   type: integer
+ *                   example: 1
  *
  *                 nome:
  *                   type: string
+ *                   example: "Gabriel Santos"
  *
  *                 email:
  *                   type: string
+ *                   example: "gabriel@email.com"
+ * 
+ *                 senha:
+ *                   type: string
+ *                   example: "fjksd3feoo35lsmafno2n4mfo2hgfhfgh44dfg32"
  *
  *                 role:
  *                   type: string
+ *                   example: "OPERADOR"
+ *
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2026-04-20T12:00:00Z"
  *
  *       400:
  *         description: Dados inválidos ou erro de validação
