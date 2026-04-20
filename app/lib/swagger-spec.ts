@@ -20,7 +20,7 @@ const options: swaggerJsdoc.Options = {
     security: [{ bearerAuth: [] }], 
     servers: [
       {
-        url: "http://localhost:3000",
+        url: "https://maluma-shoes.vercel.app",
         description: "Servidor local",
       },
     ],
