@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buscarCalcados } from "@/app/services/calcados.service";
+import { verifyToken } from "@/app/middleware/auth";
+import { authorize } from "@/app/middleware/role";
+import { Usuario } from "@/app/generated/prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
+
+    const user = await verifyToken(req) as Usuario; 
+    authorize(user.role, ["OPERADOR", "ADMIN"]);
+
     const searchParams = req.nextUrl.searchParams;
 
     const result = await buscarCalcados({

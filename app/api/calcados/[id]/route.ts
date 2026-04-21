@@ -1,11 +1,17 @@
 import { prisma } from "@/app/lib/prisma";
 import { NextResponse } from "next/server";
-
+import { verifyToken } from "@/app/middleware/auth";
+import { authorize } from "@/app/middleware/role";
+import { Usuario } from "@/app/generated/prisma/client";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+
+  const user = await verifyToken(req) as Usuario;
+  authorize(user.role, ["OPERADOR", "ADMIN"]);
+
   const item = await prisma.calcados.findUnique({
     where: { id: Number((await params).id) },
   });
@@ -18,6 +24,10 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+
+  const user = await verifyToken(req) as Usuario; 
+  authorize(user.role, ["ADMIN"]);
+
   const body = await req.json();
 
   const atualizado = await prisma.calcados.update({
@@ -33,6 +43,10 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+
+  const user = await verifyToken(req) as Usuario; 
+  authorize(user.role, ["ADMIN"]);
+
   await prisma.calcados.delete({
     where: { id: Number((await params).id) },
   });

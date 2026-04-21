@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buscarHistoricoMovimentacoes } from "@/app/services/movimentacao.service";
-
+import { verifyToken } from "@/app/middleware/auth";
+import { authorize } from "@/app/middleware/role";
+import { Usuario } from "@/app/generated/prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await verifyToken(req) as Usuario; 
+    authorize(user.role, ["ADMIN"]);
+
     const searchParams = req.nextUrl.searchParams;
 
     const result = await buscarHistoricoMovimentacoes({
