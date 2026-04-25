@@ -1,5 +1,7 @@
+import { ApiError } from "../lib/apiError";
+
 export function authorize(userRole: string, allowedRoles: string[]) {
   if (!allowedRoles.includes(userRole)) {
-    throw new Error("Sem permissão");
+    throw new ApiError("Sem permissão", 403);
   }
 }

@@ -3,6 +3,7 @@ import { buscarHistoricoMovimentacoes } from "@/app/services/movimentacao.servic
 import { verifyToken } from "@/app/middleware/auth";
 import { authorize } from "@/app/middleware/role";
 import { Usuario } from "@/app/generated/prisma/client";
+import { handleApiError } from "@/app/lib/handler-erros";
 
 export async function GET(req: NextRequest) {
   try {
@@ -22,13 +23,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(result);
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    return NextResponse.json(
-      { error: "An unknown error occurred" },
-      { status: 500 },
-    );
-  }
+  } catch (error) {
+        return handleApiError(error);
+    } 
 }

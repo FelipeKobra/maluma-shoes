@@ -3,19 +3,24 @@ import { NextResponse } from "next/server";
 import { verifyToken } from "@/app/middleware/auth";
 import { authorize } from "@/app/middleware/role";
 import { Usuario } from "@/app/generated/prisma/client";
+import { handleApiError } from "@/app/lib/handler-erros";
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user = await verifyToken(req) as Usuario; 
-  authorize(user.role, ["OPERADOR", "ADMIN"]);
+  try{
+    const user = await verifyToken(req) as Usuario; 
+    authorize(user.role, ["OPERADOR", "ADMIN"]);
 
-  const item = await prisma.posicaoEstoque.findUnique({
-    where: { id: Number((await params).id) },
-  });
+    const item = await prisma.posicaoEstoque.findUnique({
+      where: { id: Number((await params).id) },
+    });
 
-  return NextResponse.json(item);
+    return NextResponse.json(item);
+  } catch (error) {
+        return handleApiError(error);
+      } 
 }
 
 
@@ -23,17 +28,22 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user = await verifyToken(req) as Usuario; 
-  authorize(user.role, ["ADMIN"]);
 
-  const body = await req.json();
+  try{
+    const user = await verifyToken(req) as Usuario; 
+    authorize(user.role, ["ADMIN"]);
 
-  const atualizado = await prisma.posicaoEstoque.update({
-    where: { id: Number((await params).id) },
-    data: body,
-  });
+    const body = await req.json();
 
-  return NextResponse.json(atualizado);
+    const atualizado = await prisma.posicaoEstoque.update({
+      where: { id: Number((await params).id) },
+      data: body,
+    });
+
+    return NextResponse.json(atualizado);
+  } catch (error) {
+        return handleApiError(error);
+      } 
 }
 
 
@@ -41,12 +51,16 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const user = await verifyToken(req) as Usuario; 
-  authorize(user.role, ["ADMIN"]);
+  try{
+    const user = await verifyToken(req) as Usuario; 
+    authorize(user.role, ["ADMIN"]);
 
-  await prisma.posicaoEstoque.delete({
-    where: { id: Number((await params).id) },
-  });
+    await prisma.posicaoEstoque.delete({
+      where: { id: Number((await params).id) },
+    });
 
-  return NextResponse.json({ message: "Deletado com sucesso" });
+    return NextResponse.json({ message: "Deletado com sucesso", statuscode: 200 });
+  } catch (error) {
+        return handleApiError(error);
+      } 
 }

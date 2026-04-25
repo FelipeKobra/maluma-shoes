@@ -1,4 +1,5 @@
 import { prisma } from "@/app/lib/prisma";
+import { ApiError } from "../lib/apiError";
 
 type BuscarHistoricoParams = {
   tipo?: string;
@@ -9,6 +10,18 @@ type BuscarHistoricoParams = {
 
   page?: string;
   limit?: string;
+};
+
+type bodyMovimentacao = {
+  id: number;
+  data_hora: Date;
+  tipo: 'ENTRADA' | 'SAIDA' | 'AJUSTE'; // Exemplo de Union Type para os tipos que você usa no GIP
+  motivo: string;
+  saldo_anterior: number;
+  saldo_posterior: number;
+  responsavel: string;
+  itensMovimentacaoId: number;
+  posicaoEstoqueId: number;
 };
 
 export async function buscarHistoricoMovimentacoes(
@@ -84,4 +97,38 @@ export async function buscarHistoricoMovimentacoes(
       totalPages: Math.ceil(total / limit),
     },
   };
+}
+
+export async function buscarMovimentacao(id: string) {
+
+  const movimentacao = await prisma.movimentacao.findUnique({
+    where: { id: Number(id) },
+  });
+
+  if(movimentacao === null) throw new ApiError("Movimentacao não encontrada", 404);
+
+  return movimentacao;
+}
+
+
+export async function alterarMovimentacao(id: string, body: bodyMovimentacao) {
+
+  await buscarMovimentacao(id);
+
+  const movimentacao = await prisma.movimentacao.update({
+    where: { id: Number(id) },
+    data: body,
+  });
+  
+  return movimentacao;
+}
+
+
+export async function deletarMovimentacao(id: string) {
+
+  await buscarMovimentacao(id);
+
+  await prisma.movimentacao.delete({
+    where: { id: Number(id) },
+  });
 }

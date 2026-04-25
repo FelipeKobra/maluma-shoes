@@ -1,6 +1,7 @@
 import { prisma } from "@/app/lib/prisma";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { ApiError } from "../lib/apiError";
 
 export async function login(email: string, senha: string) {
   const usuario = await prisma.usuario.findUnique({
@@ -8,13 +9,13 @@ export async function login(email: string, senha: string) {
   });
 
   if (!usuario) {
-    throw new Error("Usuário não encontrado");
+    throw new ApiError("Email ou Senha inválido", 401);
   }
 
   const senhaValida = await bcrypt.compare(senha, usuario.senha);
 
   if (!senhaValida) {
-    throw new Error("Senha inválida");
+    throw new ApiError("Email ou Senha inválido", 401);
   }
 
   const token = jwt.sign(
@@ -38,7 +39,7 @@ export async function register(nome: string, email: string, senha: string) {
   });
 
   if (usuarioExistente) {
-    throw new Error("Email já cadastrado");
+    throw new ApiError("Email ja registrado", 401);
   }
 
   const senhaHash = await bcrypt.hash(senha, 10);

@@ -3,25 +3,33 @@ import { NextResponse } from "next/server";
 import { verifyToken } from "@/app/middleware/auth";
 import { authorize } from "@/app/middleware/role";
 import { Usuario } from "@/app/generated/prisma/client";
+import { handleApiError } from "@/app/lib/handler-erros";
 
 export async function GET(req: Request) {
-  const user = await verifyToken(req) as Usuario; 
-  authorize(user.role, ["OPERADOR", "ADMIN"]);
+  try {
+    const user = await verifyToken(req) as Usuario; 
+    authorize(user.role, ["OPERADOR", "ADMIN"]);
 
-  const data = await prisma.posicaoEstoque.findMany();
-  return NextResponse.json(data);
+    const data = await prisma.posicaoEstoque.findMany();
+    return NextResponse.json(data);
+  } catch (error) {
+      return handleApiError(error);
+    } 
 }
 
 
 export async function POST(req: Request) {
-  const user = await verifyToken(req) as Usuario; 
-  authorize(user.role, ["OPERADOR", "ADMIN"]);
+  try{
+    const user = await verifyToken(req) as Usuario; 
+    authorize(user.role, ["OPERADOR", "ADMIN"]);
 
-  const body = await req.json();
+    const body = await req.json();
 
-  const novo = await prisma.posicaoEstoque.create({
-    data: body,
-  });
-
-  return NextResponse.json(novo);
+    const novo = await prisma.posicaoEstoque.create({
+      data: body,
+     });
+    return NextResponse.json(novo);
+  } catch (error) {
+      return handleApiError(error);
+    } 
 }

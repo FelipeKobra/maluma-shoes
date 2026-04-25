@@ -1,4 +1,5 @@
 import { prisma } from "@/app/lib/prisma";
+import { ApiError } from "../lib/apiError";
 
 type BuscarAlertasParams = {
   page?: string;
@@ -38,8 +39,6 @@ export async function buscarAlertasEstoqueMinimo(params: BuscarAlertasParams) {
       where,
     }),
   ]);
-
-
 
   return {
     data,

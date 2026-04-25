@@ -3,6 +3,7 @@ import { realizarInventario } from "@/app/services/inventario.service";
 import { verifyToken } from "@/app/middleware/auth";
 import { authorize } from "@/app/middleware/role";
 import { Usuario } from "@/app/generated/prisma/client";
+import { handleApiError } from "@/app/lib/handler-erros";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,16 +15,7 @@ export async function POST(req: NextRequest) {
     const result = await realizarInventario(body);
 
     return NextResponse.json(result);
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        {
-          error: error.message,
-        },
-        {
-          status: 400,
-        },
-      );
-    }
-  }
+  } catch (error) {
+      return handleApiError(error);
+  } 
 }

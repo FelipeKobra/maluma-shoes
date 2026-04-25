@@ -1,4 +1,5 @@
 import { prisma } from "@/app/lib/prisma";
+import { ApiError } from "../lib/apiError";
 
 type InventarioInput = {
   posicaoEstoqueId: number;
@@ -16,7 +17,7 @@ export async function realizarInventario(data: InventarioInput) {
     });
 
     if (!estoque) {
-      throw new Error("Posição de estoque não encontrada");
+      throw new ApiError("Posição de estoque não encontrada", 404);
     }
 
     const quantidadeSistema = estoque.quantidade_atual;

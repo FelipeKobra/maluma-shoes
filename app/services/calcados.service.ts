@@ -1,4 +1,5 @@
 import { prisma } from "@/app/lib/prisma";
+import { ApiError } from "../lib/apiError";
 
 type BuscarCalcadosParams = {
   id?: string;
@@ -20,6 +21,23 @@ type BuscarCalcadosParams = {
   sort?: string;
   order?: string;
 };
+
+type bodyCalcados = {
+  codigo_barras: string;
+  modelo: string;
+  marca: string;
+  descricao: string;
+  numeracao: number;
+  cor_primaria: string;
+  cor_secundaria: string;
+  material: string;
+  genero: string;
+  categoria: string;
+  preco_venda: number; 
+  peso: number;
+  dimensao: string;
+  status: 'ATIVO' | 'INATIVO';
+}
 
 export async function buscarCalcados(params: BuscarCalcadosParams) {
   const page = Number(params.page) || 1;
@@ -129,4 +147,40 @@ export async function buscarCalcados(params: BuscarCalcadosParams) {
       totalPages: Math.ceil(total / limit),
     },
   };
+}
+
+export async function buscarCalcado(id: string) {
+
+  const item = await prisma.calcados.findUnique({
+      where: { id: Number(id) },
+  });
+
+  console.log("ITEM: " + item);
+
+  if(item === null) throw new ApiError("Item não encontrado", 404);
+
+  return item;
+}
+
+export async function alterarCalcado(id: string, body: bodyCalcados) {
+
+  await buscarCalcado(id);
+
+  const atualizado = await prisma.calcados.update({
+      where: { id: Number(id) },
+      data: body,
+  });
+
+  return atualizado;
+}
+
+
+export async function deletarCalcado(id: string) {
+
+  await buscarCalcado(id);
+
+  await prisma.calcados.delete({
+      where: { id: Number(id) },
+    });
+
 }
