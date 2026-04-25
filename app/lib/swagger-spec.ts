@@ -2435,6 +2435,98 @@ const options: swaggerJsdoc.Options = {
           }
         }
       },
+      "/api/relatorio/movimentacao": {
+        "get": {
+          "summary": "Gerar relatório de movimentações em CSV",
+          "tags": ["Relatórios"],
+          "parameters": [
+            {
+              "name": "dataInicio",
+              "in": "query",
+              "description": "Data inicial para filtragem",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-01-01T00:00:00Z"
+              }
+            },
+            {
+              "name": "dataFim",
+              "in": "query",
+              "description": "Data final para filtragem",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-12-31T00:00:00Z"
+              }
+            },
+            {
+              "name": "tipo",
+              "in": "query",
+              "description": "Tipo de movimentação (Entrada/Saída/Ajuste)",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["ENTRADA", "SAIDA", "AJUSTE"],
+                "example": "ENTRADA"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Arquivo CSV gerado com sucesso",
+              "content": {
+                "text/csv": {
+                  "schema": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Erro interno servidor"
+            },
+            "404": {
+              "description": "Nenhuma movimentação encontrada"
+            }
+          }
+        }
+      },
+      "/api/relatorio/abaixo-estoque-minimo": {
+        "get": {
+          "summary": "Gerar relatório de calçados abaixo do estoque mínimo",
+          "description": "Retorna um arquivo CSV contendo os calçados cuja quantidade atual é inferior à mínima permitida. Acesso restrito a ADMIN.",
+          "tags": ["Relatórios"],
+          "responses": {
+            "200": {
+              "description": "Arquivo CSV gerado com sucesso",
+              "content": {
+                "text/csv": {
+                  "schema": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Não autenticado"
+            },
+            "403": {
+              "description": "Sem permissão"
+            },
+            "404": {
+              "description": "Nenhum calçado abaixo do estoque mínimo encontrado"
+            },
+            "500": {
+              "description": "Erro interno servidor"
+            }
+          }
+        }
+      },
     },
   },
 
