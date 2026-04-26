@@ -12,6 +12,8 @@ type MovimentacaoInput = {
 };
 
 export async function movimentarEstoque(data: MovimentacaoInput) {
+  let alertaEstoqueMin;
+
   const estoque = await prisma.posicaoEstoque.findUnique({
     where: {
       id: data.posicaoEstoqueId,
@@ -19,9 +21,10 @@ export async function movimentarEstoque(data: MovimentacaoInput) {
   });
 
   if (!estoque) {
-    throw new Error("Estoque não encontrado");
+    throw new ApiError("Posição-Estoque não encontrado", 404);
   }
 
+  const qtdMinima = estoque.quantidade_minimo;
   const saldoAnterior = estoque.quantidade_atual;
 
   let saldoPosterior = saldoAnterior;
@@ -32,10 +35,17 @@ export async function movimentarEstoque(data: MovimentacaoInput) {
 
   if (data.tipo === "SAIDA") {
     if (saldoAnterior < data.quantidade) {
-      throw new Error("Estoque insuficiente");
+      throw new ApiError("Estoque insuficiente", 400);
     }
-
     saldoPosterior -= data.quantidade;
+
+    if(saldoPosterior < qtdMinima) {
+       alertaEstoqueMin = {
+        quantidade_minima: qtdMinima,
+        tipo: "Baixo estoque",
+        ultimo_abastescimento: estoque.ultimo_abastecimento
+      }
+    }
   }
 
   const movimentacao = await prisma.movimentacao.create({
@@ -61,7 +71,7 @@ export async function movimentarEstoque(data: MovimentacaoInput) {
     },
   });
 
-  return movimentacao;
+  return alertaEstoqueMin ? {movimentacao, alertaEstoqueMin} : movimentacao;
 }
 
 
@@ -95,8 +105,7 @@ export async function gerarRelatorioAbaixoEstoque() {
     },
   });
 
-  //if(baixoEstoque.length === 0) throw new ApiError("Nenhuma calcado abaixo do estoque mínimo", 404);
-
+  if(baixoEstoque.length === 0) throw new ApiError("Nenhuma calcado abaixo do estoque mínimo", 404);
 
   const dadosFormatados = baixoEstoque.flatMap((pos) => {
     

@@ -155,8 +155,6 @@ export async function buscarCalcado(id: string) {
       where: { id: Number(id) },
   });
 
-  console.log("ITEM: " + item);
-
   if(item === null) throw new ApiError("Item não encontrado", 404);
 
   return item;

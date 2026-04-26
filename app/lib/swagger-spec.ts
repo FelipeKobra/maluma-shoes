@@ -2433,6 +2433,145 @@ const options: swaggerJsdoc.Options = {
               description: "Erro interno no servidor"
             }
           }
+        },
+        "get": {
+          "summary": "Listar todos os usuários",
+          "description": "Retorna uma lista completa de usuários cadastrados no sistema. Acesso restrito a ADMIN.",
+          "tags": ["Usuarios"],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Lista de usuários retornada com sucesso",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "nome": {
+                          "type": "string",
+                          "example": "Gabriel Santos"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email",
+                          "example": "gabriel@email.com"
+                        },
+                        "role": {
+                          "type": "string",
+                          "enum": ["ADMIN", "USER"],
+                          "example": "ADMIN"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-04-25T12:00:00Z"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Não Autenticado"
+            },
+            "403": {
+              "description": "Sem permissão"
+            },
+            "500": {
+              "description": "Erro interno do servidor"
+            }
+          }
+          
+        },
+      },
+      "/api/usuarios/{id}": {
+        "put": {
+          "summary": "Atualizar um usuário existente",
+          "description": "Atualiza os dados de um usuário (nome, email, senha e cargo). A senha será automaticamente criptografada antes de ser salva. Acesso restrito a ADMIN.",
+          "tags": ["Usuarios"],
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "id",
+              "in": "path",
+              "description": "ID numérico do usuário a ser alterado",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "example": 1
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["nome", "email", "senha", "role"],
+                  "properties": {
+                    "nome": {
+                      "type": "string",
+                      "example": "Gabriel Atualizado"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "example": "gabriel.novo@email.com"
+                    },
+                    "senha": {
+                      "type": "string",
+                      "format": "password",
+                      "example": "novaSenha123"
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": ["ADMIN", "OPERADOR"],
+                      "example": "OPERADOR"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Usuário atualizado com sucesso",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "nome": { "type": "string" },
+                      "email": { "type": "string" },
+                      "role": { "type": "string" },
+                      "createdAt": { "type": "string", "format": "date-time" }
+                    }
+                  }
+                }
+              }
+            },
+            "401": { "description": "Não autenticado" },
+            "403": { "description": "Acesso negado" },
+            "404": { "description": "Usuário não encontrado" },
+            "500": { "description": "Erro interno do servidor" }
+          }
         }
       },
       "/api/relatorio/movimentacao": {

@@ -6,6 +6,7 @@ type BuscarAlertasParams = {
   limit?: string;
 };
 
+
 export async function buscarAlertasEstoqueMinimo(params: BuscarAlertasParams) {
   const page = Number(params.page) || 1;
   const limit = Number(params.limit) || 10;

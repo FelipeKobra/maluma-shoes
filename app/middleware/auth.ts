@@ -14,7 +14,7 @@ export function verifyToken(req: Request)  {
   const secret = process.env.JWT_SECRET;
 
   if (!secret) {
-    throw new Error("JWT_SECRET não definido");
+    throw new ApiError("JWT_SECRET não definido", 401);
   }
 
   return jwt.verify(token, secret);
