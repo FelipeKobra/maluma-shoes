@@ -155,7 +155,7 @@ export async function buscarCalcado(id: string) {
       where: { id: Number(id) },
   });
 
-  if(item === null) throw new ApiError("Item não encontrado", 404);
+  if(item === null) throw new ApiError("Calçado não encontrado", 404);
 
   return item;
 }

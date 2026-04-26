@@ -18,18 +18,18 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-try{
-  const user = await verifyToken(req) as Usuario; 
-  authorize(user.role, ["ADMIN"]);
+  try{
+    const user = await verifyToken(req) as Usuario; 
+    authorize(user.role, ["ADMIN"]);
 
-  const body = await req.json();
+    const body = await req.json();
 
-  const novo = await prisma.calcados.create({
-    data: body,
-  });
+    const novo = await prisma.calcados.create({
+      data: body,
+    });
 
-  return NextResponse.json(novo);
-} catch (error) {
-    return handleApiError(error);
-  } 
+    return NextResponse.json(novo);
+  } catch (error) {
+      return handleApiError(error);
+    } 
 }

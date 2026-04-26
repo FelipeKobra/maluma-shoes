@@ -2107,108 +2107,118 @@ const options: swaggerJsdoc.Options = {
       "/api/posicao-estoque/moverEstoque": {
         post: {
           summary: "Realizar movimentação de estoque (entrada ou saída)",
+          description: `### Regras do Corpo da Requisição (Body):
+            Os campos **ordemMovimentacaoId** e **ordemMovimentacao** são mutuamente exclusivos:
+            1. **Criar Nova Ordem (Padrão):** Preencha o objeto 'ordemMovimentacao' e remova o campo 'ordemMovimentacaoId'.
+            2. **Usar Ordem Existente:** Preencha 'ordemMovimentacaoId' com o ID do registro e remova o objeto 'ordemMovimentacao'.
+            
+            ### Regras de Retorno:
+            O formato da resposta varia conforme o saldo do estoque:
+            - **Retorno Normal:** Se a movimentação for de ENTRADA ou se for SAÍDA e o saldo posterior for maior que o estoque mínimo, retorna apenas o objeto de movimentação.
+            - **Retorno com Alerta:** Se a movimentação for de SAÍDA e o saldo ficar abaixo do limite configurado (estoque_minimo), o retorno incluirá o objeto da movimentação e um objeto 'alertaEstoqueMin'.`,
           tags: ["PosicaoEstoque"],
+          security: [{ bearerAuth: [] }],
           requestBody: {
             required: true,
             content: {
               "application/json": {
                 schema: {
                   type: "object",
-                  required: [
-                    "posicaoEstoqueId",
-                    "itensMovimentacaoId",
-                    "quantidade",
-                    "tipo",
-                    "motivo",
-                    "responsavel"
-                  ],
+                  required: ["calcadoId", "posicaoEstoqueId", "quantidade", "preco_unitario", "subtotal", "motivo"],
                   properties: {
-                    posicaoEstoqueId: {
-                      type: "integer",
-                      example: 1
+                    calcadoId: { type: "integer", example: 3 },
+                    posicaoEstoqueId: { type: "integer", example: 1 },
+                    quantidade: { type: "integer", example: 11 },
+                    motivo: { type: "string", example: "Abastecimento Nike" }
+                  },
+                  oneOf: [
+                    {
+                      title: "Cenário 1: Criar Nova Ordem",
+                      required: ["ordemMovimentacao"],
+                      properties: {
+                        ordemMovimentacao: {
+                          type: "object",
+                          properties: {
+                            data_emissao: { type: "string", format: "date-time", example: "2026-04-26T14:30:00.000Z" },
+                            empresa: { type: "string", example: "NIKE" },
+                            cnpj: { type: "string", example: "000.365.709" },
+                            numero_ordem: { type: "string", example: "000.365.709" },
+                            tipo: { type: "string", enum: ["ENTRADA", "SAIDA"], example: "ENTRADA" },
+                            status: { type: "string", example: "PROCESSADO" },
+                            valor_total: { type: "string", example: "7700.00" }
+                          }
+                        }
+                      }
                     },
-                    itensMovimentacaoId: {
-                      type: "integer",
-                      example: 10
-                    },
-                    quantidade: {
-                      type: "integer",
-                      example: 5
-                    },
-                    tipo: {
-                      type: "string",
-                      enum: ["ENTRADA", "SAIDA"],
-                      example: "ENTRADA"
-                    },
-                    motivo: {
-                      type: "string",
-                      example: "Recebimento de mercadoria"
-                    },
-                    responsavel: {
-                      type: "string",
-                      example: "Gabriel Santos"
+                    {
+                      title: "Cenário 2: Usar Ordem Existente",
+                      required: ["ordemMovimentacaoId"],
+                      properties: {
+                        ordemMovimentacaoId: { type: "integer", example: 45 }
+                      }
                     }
-                  }
+                  ]
                 }
               }
             }
           },
           responses: {
             200: {
-              description: "Movimentação realizada com sucesso",
+              description: "Operação realizada com sucesso. O formato muda se houver alerta de estoque.",
               content: {
                 "application/json": {
                   schema: {
-                    type: "object",
-                    properties: {
-                      id: {
-                        type: "integer",
-                        example: 1
+                    oneOf: [
+                      {
+                        title: "Retorno Padrão",
+                        type: "object",
+                        properties: {
+                          id: { type: "integer" },
+                          tipo: { type: "string" },
+                          data_hora: { type: "string", format: "date-time" },
+                          motivo: { type: "string" },
+                          saldo_anterior: { type: "number" },
+                          saldo_posterior: { type: "number" },
+                          responsavel: { type: "string" },
+                          itensMovimentacaoId: { type: "integer" },
+                          posicaoEstoqueId: { type: "integer" }
+                        }
                       },
-                      data_hora: {
-                        type: "string",
-                        format: "date-time",
-                        example: "2026-04-20T12:00:00Z"
-                      },
-                      tipo: {
-                        type: "string",
-                        example: "ENTRADA"
-                      },
-                      motivo: {
-                        type: "string",
-                        example: "Recebimento de mercadoria"
-                      },
-                      saldo_anterior: {
-                        type: "integer",
-                        example: 10
-                      },
-                      saldo_posterior: {
-                        type: "integer",
-                        example: 15
-                      },
-                      responsavel: {
-                        type: "string",
-                        example: "Gabriel Santos"
-                      },
-                      itensMovimentacaoId: {
-                        type: "integer",
-                        example: 10
-                      },
-                      posicaoEstoqueId: {
-                        type: "integer",
-                        example: 1
+                      {
+                        title: "Retorno com Alerta",
+                        type: "object",
+                        properties: {
+                          movimentacao: {
+                            type: "object",
+                            properties: {
+                              id: { type: "integer" },
+                              tipo: { type: "string" },
+                              data_hora: { type: "string", format: "date-time" },
+                              motivo: { type: "string" },
+                              saldo_anterior: { type: "number" },
+                              saldo_posterior: { type: "number" },
+                              responsavel: { type: "string" },
+                              itensMovimentacaoId: { type: "integer" },
+                              posicaoEstoqueId: { type: "integer" }
+                            }
+                          },
+                          alertaEstoqueMin: {
+                            type: "object",
+                            properties: {
+                              quantidade_minima: { type: "number" },
+                              tipo: { type: "string", example: "Baixo estoque" },
+                              ultimo_abastescimento: { type: "string", format: "date-time", nullable: true }
+                            }
+                          }
+                        }
                       }
-                    }
+                    ]
                   }
                 }
               }
             },
-            400: {
-              description: "Erro de validação ou regra de negócio"
-            },
-            500: {
-              description: "Erro interno no servidor"
-            }
+            400: { description: "Erro de validação ou estoque insuficiente" },
+            404: { description: "Recurso não encontrado" }
           }
         }
       },

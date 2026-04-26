@@ -13,6 +13,7 @@ type MovimentacaoInput = {
 
 export async function movimentarEstoque(data: MovimentacaoInput) {
   let alertaEstoqueMin;
+  let alertaEstoqueMax;
 
   const estoque = await prisma.posicaoEstoque.findUnique({
     where: {
@@ -26,10 +27,18 @@ export async function movimentarEstoque(data: MovimentacaoInput) {
 
   const qtdMinima = estoque.quantidade_minimo;
   const saldoAnterior = estoque.quantidade_atual;
+  const qtdMaxima = estoque.quantidade_maximo;
 
   let saldoPosterior = saldoAnterior;
 
   if (data.tipo === "ENTRADA") {
+    if(qtdMaxima < saldoAnterior + data.quantidade) {
+      const qtdExcedida = (saldoAnterior + data.quantidade) - qtdMaxima
+      alertaEstoqueMax = {
+        quantidade_maxima: qtdMaxima,
+        tipo: "Estoque excedido em" + qtdExcedida + " pares",
+      }
+    }
     saldoPosterior += data.quantidade;
   }
 
