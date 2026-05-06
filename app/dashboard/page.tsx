@@ -1,57 +1,53 @@
 'use client';
 
-// ============================================================
-// DASHBOARD/PAGE.TSX
-//
-// Equivalente a: dashboard.html + dashboard.js
-//
-// Conceito novo: useEffect
-//   Substitui o código que rodava automaticamente ao carregar
-//   a página (ex: carregarDashboard() no final do .js).
-//   useEffect(() => { ... }, []) roda UMA VEZ após o componente
-//   aparecer na tela. O [] vazio significa "sem dependências".
-// ============================================================
-
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { calcadosAPI, estoqueAPI, movimentacoesAPI, alertasAPI } from '@/lib/api';
 import type { Alerta, PosicaoEstoque } from '@/types';
 
 export default function DashboardPage() {
-  // Estados para os números dos cards
-  const [totalCalcados, setTotalCalcados]         = useState<number | null>(null);
-  const [totalEstoque, setTotalEstoque]           = useState<number | null>(null);
-  const [totalMovimentacoes, setTotalMovimentacoes] = useState<number | null>(null);
-  const [alertas, setAlertas]                     = useState<Alerta[]>([]);
-  const [minimo, setMinimo]                       = useState<PosicaoEstoque[]>([]);
-  const [carregando, setCarregando]               = useState(true);
+  const [dashboardData, setDashboardData] = useState({
+    totalCalcados: null as number | null,
+    totalEstoque: null as number | null,
+    totalMovimentacoes: null as number | null,
+    alertas: [] as Alerta[],
+    minimo: [] as PosicaoEstoque[],
+    carregando: true, // Movemos o 'carregando' para dentro do objeto principal
+  });
 
-  // useEffect substitui o carregarDashboard() chamado no fim do .js
   useEffect(() => {
-    carregarDashboard();
-  }, []); // [] = roda só uma vez, quando o componente monta
+    // Definimos a função dentro do useEffect para isolar o escopo
+    async function carregarDashboard() {
+      try {
+        const [calcados, estoque, movs, alertasData, minimoData] = await Promise.all([
+          calcadosAPI.listar().catch(() => []),
+          estoqueAPI.listar().catch(() => []),
+          movimentacoesAPI.listar().catch(() => []),
+          alertasAPI.estoqueMinimo().catch(() => []),
+          estoqueAPI.minimo().catch(() => []),
+        ]);
 
-  async function carregarDashboard() {
-    try {
-      const [calcados, estoque, movs, alertasData, minimoData] = await Promise.all([
-        calcadosAPI.listar(),
-        estoqueAPI.listar(),
-        movimentacoesAPI.listar(),
-        alertasAPI.estoqueMinimo(),
-        estoqueAPI.minimo(),
-      ]);
+        // ATUALIZAÇÃO ÚNICA: Dados e status de carregamento no mesmo ciclo
+        setDashboardData({
+          totalCalcados: Array.isArray(calcados) ? calcados.length : 0,
+          totalEstoque: Array.isArray(estoque) ? estoque.length : 0,
+          totalMovimentacoes: Array.isArray(movs) ? movs.length : 0,
+          alertas: Array.isArray(alertasData) ? alertasData : [],
+          minimo: Array.isArray(minimoData) ? minimoData : [],
+          carregando: false, // O fim do loading acontece junto com a chegada dos dados
+        });
 
-      setTotalCalcados(Array.isArray(calcados) ? calcados.length : 0);
-      setTotalEstoque(Array.isArray(estoque) ? estoque.length : 0);
-      setTotalMovimentacoes(Array.isArray(movs) ? movs.length : 0);
-      setAlertas(Array.isArray(alertasData) ? alertasData : []);
-      setMinimo(Array.isArray(minimoData) ? minimoData : []);
-    } catch (err) {
-      console.error('Erro ao carregar dashboard:', err);
-    } finally {
-      setCarregando(false);
+      } catch (err) {
+        console.error('Erro ao carregar dashboard:', err);
+        setDashboardData(prev => ({ ...prev, carregando: false }));
+      }
     }
-  }
+
+    carregarDashboard();
+  }, []);
+
+  // Extraímos as variáveis para manter o seu HTML intacto
+  const { totalCalcados, totalEstoque, totalMovimentacoes, alertas, minimo, carregando } = dashboardData;
 
   return (
     <div className="layout">
@@ -68,7 +64,6 @@ export default function DashboardPage() {
           <StatCard icon="⚠️" valor={alertas.length} label="Alertas de Estoque" alerta />
         </div>
 
-        {/* Alertas */}
         <div className="card">
           <div className="card-title">⚠️ Alertas de Estoque Mínimo</div>
           {carregando ? (
@@ -96,7 +91,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Estoque mínimo */}
         <div className="card">
           <div className="card-title">📉 Itens Abaixo do Estoque Mínimo</div>
           {carregando ? (
@@ -110,7 +104,7 @@ export default function DashboardPage() {
                 <tbody>
                   {minimo.map((m, i) => (
                     <tr key={i}>
-                      <td>{m.calcado?.nome || m.nome || '—'}</td>
+                      <td>{m.calcado?.nome || m.localizacao || '—'}</td>
                       <td>{m.saldo ?? m.quantidade ?? '—'}</td>
                       <td>{m.estoqueMinimo ?? m.minimo ?? '—'}</td>
                     </tr>
@@ -127,13 +121,11 @@ export default function DashboardPage() {
   );
 }
 
-// ---- Componente interno StatCard ----
-// Props tipadas com interface: obriga quem usa a passar os valores certos
 interface StatCardProps {
   icon: string;
   valor: number | null;
   label: string;
-  alerta?: boolean; // ? = opcional, padrão é undefined (falso)
+  alerta?: boolean;
 }
 
 function StatCard({ icon, valor, label, alerta }: StatCardProps) {

@@ -17,6 +17,7 @@ import { fazerLogin } from '@/lib/auth';
 
 export default function LoginPage() {
   const router = useRouter();
+  console.log("PASSOU");
 
   // useState<string>('') cria uma variável reativa.
   // [valor, setValor] — valor lê, setValor atualiza e re-renderiza.

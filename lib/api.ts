@@ -20,6 +20,8 @@ function getToken(): string | null {
 async function apiFetch<T>(path: string, options: RequestInit & { _csv?: boolean } = {}): Promise<T> {
   const token = getToken();
 
+  console.log("PATH: " + path);
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
