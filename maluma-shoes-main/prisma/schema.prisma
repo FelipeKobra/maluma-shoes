@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["maluma"]
+}
+
+model Calcados {
+  id                Int                 @id @default(autoincrement())
+  codigo_barras     String              @db.VarChar(13)
+  modelo            String              @db.VarChar(100)
+  marca             String              @db.VarChar(50)
+  descricao         String
+  numeracao         Int
+  cor_primaria      String              @db.VarChar(30)
+  cor_secundaria    String              @db.VarChar(30)
+  material          String              @db.VarChar(45)
+  genero            String              @db.VarChar(45)
+  categoria         String              @db.VarChar(45)
+  preco_venda       Decimal             @db.Decimal(10, 2)
+  peso              Float
+  dimensao          String              @db.VarChar(45)
+  status            String              @db.VarChar(45)
+  itensMovimentacao ItensMovimentacao[]
+
+  @@schema("maluma")
+}
+
+model OrdemMovimentacao {
+  id                Int                 @id @default(autoincrement())
+  data_emissao      DateTime
+  empresa           String              @db.VarChar(100)
+  cnpj              String              @db.VarChar(14)
+  numero_ordem      String              @db.VarChar(20)
+  tipo              String              @db.VarChar(45)
+  status            String              @db.VarChar(45)
+  valor_total       Decimal             @db.Decimal(12, 2)
+  itensMovimentacao ItensMovimentacao[]
+
+  @@schema("maluma")
+}
+
+model ItensMovimentacao {
+  id                  Int               @id @default(autoincrement())
+  preco_unitario      Decimal           @db.Decimal(10, 2)
+  quantidade          Int
+  subtotal            Decimal           @db.Decimal(10, 2)
+  calcadosId          Int
+  ordemMovimentacaoId Int
+  calcados            Calcados          @relation(fields: [calcadosId], references: [id])
+  ordemMovimentacao   OrdemMovimentacao @relation(fields: [ordemMovimentacaoId], references: [id])
+  movimentacoes       Movimentacao[]
+
+  @@schema("maluma")
+}
+
+model PosicaoEstoque {
+  id                   Int            @id @default(autoincrement())
+  cod_localizacao      String         @db.VarChar(20)
+  quantidade_atual     Int
+  quantidade_minimo    Int
+  quantidade_maximo    Int
+  ultimo_abastecimento DateTime?
+  ultima_contagem      DateTime
+  para_mostruario      Boolean
+  movimentacoes        Movimentacao[]
+
+  @@schema("maluma")
+}
+
+model Movimentacao {
+  id                  Int               @id @default(autoincrement())
+  data_hora           DateTime
+  tipo                String            @db.VarChar(45)
+  motivo              String            @db.VarChar(100)
+  saldo_anterior      Int
+  saldo_posterior     Int
+  responsavel         String            @db.VarChar(100)
+  itensMovimentacaoId Int
+  posicaoEstoqueId    Int
+  itensMovimentacao   ItensMovimentacao @relation(fields: [itensMovimentacaoId], references: [id])
+  posicaoEstoque      PosicaoEstoque    @relation(fields: [posicaoEstoqueId], references: [id])
+
+  @@schema("maluma")
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  senha     String
+  role      Role     @default(OPERADOR)
+  createdAt DateTime @default(now())
+
+  @@map("usuarios")
+  @@schema("maluma")
+}
+
+enum Role {
+  ADMIN
+  OPERADOR
+  GESTOR
+
+  @@schema("maluma")
+}
