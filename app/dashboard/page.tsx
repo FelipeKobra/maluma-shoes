@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { ElementType } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { calcadosAPI, estoqueAPI, movimentacoesAPI, alertasAPI } from '@/lib/api';
 import type { Alerta, PosicaoEstoque } from '@/types';
+import { Footprints, Archive, RefreshCcw, CircleAlert, MessageCircleWarning, TrendingDown } from 'lucide-react';
+
 
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState({
@@ -58,21 +61,30 @@ export default function DashboardPage() {
         </div>
 
         <div className="cards-grid">
-          <StatCard icon="👟" valor={totalCalcados} label="Calçados Cadastrados" />
-          <StatCard icon="📦" valor={totalEstoque} label="Posições de Estoque" />
-          <StatCard icon="🔄" valor={totalMovimentacoes} label="Movimentações" />
-          <StatCard icon="⚠️" valor={alertas.length} label="Alertas de Estoque" alerta />
+          <StatCard Icon={Footprints} valor={totalCalcados} label="Calçados Cadastrados" />
+          <StatCard Icon={Archive} valor={totalEstoque} label="Posições de Estoque" />
+          <StatCard Icon={RefreshCcw} valor={totalMovimentacoes} label="Movimentações" />
+          <StatCard Icon={CircleAlert} valor={alertas.length} label="Alertas de Estoque" alerta />
         </div>
 
+        {/* Card de Alertas de Estoque Mínimo */}
         <div className="card">
-          <div className="card-title">⚠️ Alertas de Estoque Mínimo</div>
+          <div className="card-title">
+            <MessageCircleWarning size={20} strokeWidth={2.5} />
+            Alertas de Estoque Mínimo
+          </div>
           {carregando ? (
             <p className="loading-text">Carregando...</p>
           ) : alertas.length > 0 ? (
             <div className="tabela-wrapper">
               <table>
                 <thead>
-                  <tr><th>Produto</th><th>Estoque Atual</th><th>Estoque Mínimo</th><th>Status</th></tr>
+                  <tr>
+                    <th>Produto</th>
+                    <th>Estoque Atual</th>
+                    <th>Estoque Mínimo</th>
+                    <th>Status</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {alertas.map((a, i) => (
@@ -80,26 +92,38 @@ export default function DashboardPage() {
                       <td>{a.nomeProduto || a.nome || a.calcado?.nome || '—'}</td>
                       <td>{a.quantidadeAtual ?? a.saldo ?? '—'}</td>
                       <td>{a.estoqueMinimo ?? a.minimo ?? '—'}</td>
-                      <td><span className="badge badge-alerta">⚠️ Abaixo do mínimo</span></td>
+                      <td>
+                        <span className="badge badge-alerta" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <CircleAlert size={14} /> Abaixo do mínimo
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="texto-vazio">✅ Nenhum alerta no momento.</p>
+            <p className="texto-vazio">Nenhum alerta no momento.</p>
           )}
         </div>
 
+        {/* Card de Itens Abaixo do Estoque Mínimo */}
         <div className="card">
-          <div className="card-title">📉 Itens Abaixo do Estoque Mínimo</div>
+          <div className="card-title">
+            <TrendingDown size={20} strokeWidth={2.5} />
+            Itens Abaixo do Estoque Mínimo
+          </div>
           {carregando ? (
             <p className="loading-text">Carregando...</p>
           ) : minimo.length > 0 ? (
             <div className="tabela-wrapper">
               <table>
                 <thead>
-                  <tr><th>Calçado</th><th>Saldo Atual</th><th>Mínimo</th></tr>
+                  <tr>
+                    <th>Calçado</th>
+                    <th>Saldo Atual</th>
+                    <th>Mínimo</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {minimo.map((m, i) => (
@@ -113,7 +137,7 @@ export default function DashboardPage() {
               </table>
             </div>
           ) : (
-            <p className="texto-vazio">✅ Todos os calçados estão com estoque adequado.</p>
+            <p className="texto-vazio">Todos os calçados estão com estoque adequado.</p>
           )}
         </div>
       </main>
@@ -122,16 +146,18 @@ export default function DashboardPage() {
 }
 
 interface StatCardProps {
-  icon: string;
+  Icon: ElementType; // "ElementType" permite passar componentes como Footprints, Archive, etc.
   valor: number | null;
   label: string;
   alerta?: boolean;
 }
 
-function StatCard({ icon, valor, label, alerta }: StatCardProps) {
+function StatCard({ Icon, valor, label, alerta }: StatCardProps) {
   return (
     <div className={`card card-stat${alerta ? ' card-alerta' : ''}`}>
-      <span className="stat-icon">{icon}</span>
+      <span className="stat-icon">
+        <Icon size={24} strokeWidth={2} /> {/* O Lucide aceita essas props diretamente */}
+      </span>
       <div>
         <div className="stat-valor">{valor ?? '—'}</div>
         <div className="stat-label">{label}</div>

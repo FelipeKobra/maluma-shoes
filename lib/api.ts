@@ -11,6 +11,7 @@ import type { Calcado, PosicaoEstoque, Movimentacao, Alerta, Usuario, MovimentoP
 
 const API = 'https://maluma-shoes.vercel.app';
 
+
 function getToken(): string | null {
   // typeof window === 'undefined' verifica se estamos no servidor (Next.js SSR)
   if (typeof window === 'undefined') return null;

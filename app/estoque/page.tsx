@@ -1,13 +1,15 @@
 'use client';
 
-// ============================================================
-// ESTOQUE/PAGE.TSX
-// Equivalente a: estoque.html + estoque.js
-// ============================================================
-
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { estoqueAPI } from '@/lib/api';
+// Importação dos ícones necessários
+import { 
+  Archive, 
+  AlertTriangle, 
+  CheckCircle2, 
+  AlertCircle 
+} from 'lucide-react';
 import type { PosicaoEstoque, TipoMovimento, MovimentoPayload } from '@/types';
 
 export default function EstoquePage() {
@@ -49,14 +51,26 @@ export default function EstoquePage() {
 
         {/* Tabela posição de estoque */}
         <div className="card">
-          <div className="card-title">📦 Posição de Estoque</div>
-          {carregando ? <p className="loading-text">Carregando...</p> : estoque.length === 0 ? (
+          {/* Substituído 📦 por Archive */}
+          <div className="card-title">
+            <Archive size={20} strokeWidth={2.5} /> Posição de Estoque
+          </div>
+          {carregando ? (
+            <p className="loading-text">Carregando...</p>
+          ) : estoque.length === 0 ? (
             <p className="texto-vazio">Nenhuma posição de estoque encontrada.</p>
           ) : (
             <div className="tabela-wrapper">
               <table>
                 <thead>
-                  <tr><th>ID</th><th>Calçado ID</th><th>Localização</th><th>Saldo</th><th>Estoque Mínimo</th><th>Status</th></tr>
+                  <tr>
+                    <th>ID</th>
+                    <th>Calçado ID</th>
+                    <th>Localização</th>
+                    <th>Saldo</th>
+                    <th>Estoque Mínimo</th>
+                    <th>Status</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {estoque.map((i) => {
@@ -71,9 +85,15 @@ export default function EstoquePage() {
                         <td>{saldo}</td>
                         <td>{min}</td>
                         <td>
-                          {baixo
-                            ? <span className="badge badge-alerta">⚠️ Baixo</span>
-                            : <span className="badge badge-entrada">✅ OK</span>}
+                          {baixo ? (
+                            <span className="badge badge-alerta" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <AlertCircle size={14} /> Baixo
+                            </span>
+                          ) : (
+                            <span className="badge badge-entrada" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <CheckCircle2 size={14} /> OK
+                            </span>
+                          )}
                         </td>
                       </tr>
                     );
@@ -86,14 +106,26 @@ export default function EstoquePage() {
 
         {/* Tabela estoque mínimo */}
         <div className="card">
-          <div className="card-title">⚠️ Itens com Estoque Baixo</div>
-          {carregando ? <p className="loading-text">Carregando...</p> : minimo.length === 0 ? (
-            <p className="texto-vazio">✅ Nenhum item abaixo do mínimo.</p>
+          {/* Substituído ⚠️ por AlertTriangle */}
+          <div className="card-title">
+            <AlertTriangle size={20} strokeWidth={2.5} /> Itens com Estoque Baixo
+          </div>
+          {carregando ? (
+            <p className="loading-text">Carregando...</p>
+          ) : minimo.length === 0 ? (
+            <p className="texto-vazio" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle2 size={18} color="#10b981" /> Nenhum item abaixo do mínimo.
+            </p>
           ) : (
             <div className="tabela-wrapper">
               <table>
                 <thead>
-                  <tr><th>ID</th><th>Calçado ID</th><th>Saldo</th><th>Mínimo</th></tr>
+                  <tr>
+                    <th>ID</th>
+                    <th>Calçado ID</th>
+                    <th>Saldo</th>
+                    <th>Mínimo</th>
+                  </tr>
                 </thead>
                 <tbody>
                   {minimo.map((i) => (

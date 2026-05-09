@@ -160,7 +160,7 @@ body {
   flex: 1;
 }
  
-.nav-item {
+/*.nav-item {
   display: block;
   padding: 10px 14px;
   border-radius: 8px;
@@ -169,6 +169,38 @@ body {
   font-size: 14px;
   font-weight: 500;
   transition: all 0.15s;
+}*/
+
+.nav-item {
+  display: flex;          /* Mudança de block para flex */
+  align-items: center;    /* Alinha verticalmente o ícone e o texto no centro */
+  gap: 12px;              /* Cria o espaçamento entre o ícone e o texto */
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+/*.nav-item svg {
+  vertical-align: middle;
+  margin-right: 8px;
+  flex-shrink: 0;
+}*/
+
+.nav-item svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  /* ... seu código existente ... */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Garante que fiquem à esquerda no mobile */
+  }
 }
  
 .nav-item:hover { background: rgba(255,255,255,0.07); color: white; }
@@ -220,30 +252,55 @@ body {
   padding: 24px;
   box-shadow: var(--shadow);
 }
- 
+
+/* Alterado: Adicionado Flexbox para alinhar ícone SVG e Texto lado a lado */
 .card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Espaço entre o ícone e o texto */
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 547;
   margin-bottom: 16px;
   color: var(--text);
 }
- 
+
+/* Garante que o ícone dentro do título não distorça */
+.card-title svg {
+  flex-shrink: 0;
+  color: var(--text); /* Ou 'black' se quiser forçar o preto */
+}
+
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
 }
- 
+
 .card-stat {
   display: flex;
   align-items: center;
   gap: 16px;
 }
+
+/* Ajuste para o ícone nos cards de estatística (os de cima) */
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Estilo para a badge dentro da tabela (opcional, para alinhar o ícone interno) */
+.badge-alerta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
  
 .stat-icon { font-size: 36px; }
  
 .stat-valor {
-  font-family: 'Josefin Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 32px;
   font-weight: 600;
   color: var(--text);
@@ -463,10 +520,10 @@ tbody tr:last-child td { border-bottom: none; }
 .hidden { display: none !important; }
  
 .texto-vazio {
-  text-align: center;
+  text-align: left;
   color: var(--text-muted);
-  padding: 32px;
-  font-size: 15px;
+  padding: 10px;
+  font-size: 13px;
 }
  
 @media (max-width: 768px) {
@@ -512,8 +569,4 @@ tbody tr:last-child td { border-bottom: none; }
   .cards-grid { grid-template-columns: 1fr; }
 }
  
-.nav-item svg {
-  vertical-align: middle;
-  margin-right: 8px;
-  flex-shrink: 0;
-}
+
