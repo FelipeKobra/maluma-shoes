@@ -65,25 +65,25 @@ export default function EstoquePage() {
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>Calçado ID</th>
                     <th>Localização</th>
-                    <th>Saldo</th>
+                    <th>Estoque Atual</th>
                     <th>Estoque Mínimo</th>
+                    <th>Último Abastecimento</th>
                     <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {estoque.map((i) => {
-                    const saldo = i.saldo ?? i.quantidade ?? 0;
-                    const min   = i.estoqueMinimo ?? i.minimo ?? 0;
-                    const baixo = saldo < min;
+                    const qtdAtual = i.quantidadeAtual ?? 0;
+                    const min   = i.quantidadeMinima ?? 0;
+                    const baixo = qtdAtual < min;
                     return (
                       <tr key={i.id}>
                         <td>{i.id}</td>
-                        <td>{i.calcadosId ?? i.calcadoId ?? '—'}</td>
-                        <td>{i.localizacao ?? i.posicao ?? '—'}</td>
-                        <td>{saldo}</td>
+                        <td>{i.localizacao ?? '—'}</td>
+                        <td>{qtdAtual ?? '—'}</td>
                         <td>{min}</td>
+                        <td>{i.ultimoAbastecimento}</td>
                         <td>
                           {baixo ? (
                             <span className="badge badge-alerta" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -98,44 +98,6 @@ export default function EstoquePage() {
                       </tr>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* Tabela estoque mínimo */}
-        <div className="card">
-          {/* Substituído ⚠️ por AlertTriangle */}
-          <div className="card-title">
-            <AlertTriangle size={20} strokeWidth={2.5} /> Itens com Estoque Baixo
-          </div>
-          {carregando ? (
-            <p className="loading-text">Carregando...</p>
-          ) : minimo.length === 0 ? (
-            <p className="texto-vazio" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <CheckCircle2 size={18} color="#10b981" /> Nenhum item abaixo do mínimo.
-            </p>
-          ) : (
-            <div className="tabela-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Calçado ID</th>
-                    <th>Saldo</th>
-                    <th>Mínimo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {minimo.map((i) => (
-                    <tr key={i.id}>
-                      <td>{i.id}</td>
-                      <td>{i.calcadosId ?? i.calcadoId ?? '—'}</td>
-                      <td>{i.saldo ?? i.quantidade ?? '—'}</td>
-                      <td>{i.estoqueMinimo ?? i.minimo ?? '—'}</td>
-                    </tr>
-                  ))}
                 </tbody>
               </table>
             </div>

@@ -90,6 +90,17 @@ export const baixoEstoque = await prisma.posicaoEstoque.findMany({
       lte: prisma.posicaoEstoque.fields.quantidade_minimo,
     },
   },
+  include: {
+      movimentacoes: {
+        include: {
+          itensMovimentacao: {
+            include: {
+              calcados: true, 
+            },
+          },
+        },
+      },
+    },
 });
 
 

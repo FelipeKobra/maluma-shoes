@@ -27,7 +27,7 @@ export interface Calcado {
   status?: StatusCalcado;
 }
 
-export interface PosicaoEstoque {
+/*export interface PosicaoEstoque {
   id: number;
   calcadosId?: number;
   calcadoId?: number;
@@ -38,6 +38,19 @@ export interface PosicaoEstoque {
   estoqueMinimo?: number;
   minimo?: number;
   calcado?: { nome?: string };
+}*/
+
+export interface PosicaoEstoque {
+  id: number;
+  localizacao?: string;
+  quantidadeAtual?: number;
+  quantidadeMinima?: number;
+  estoqueMinimoMaximo?: number;
+  ultimoAbastecimento?: string;
+  ultimaContagem?: string;
+  paraMostruario?:boolean;
+  modelo?: string;
+  marca?: string;
 }
 
 export interface Movimentacao {

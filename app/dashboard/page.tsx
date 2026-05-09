@@ -67,45 +67,6 @@ export default function DashboardPage() {
           <StatCard Icon={CircleAlert} valor={alertas.length} label="Alertas de Estoque" alerta />
         </div>
 
-        {/* Card de Alertas de Estoque Mínimo */}
-        <div className="card">
-          <div className="card-title">
-            <MessageCircleWarning size={20} strokeWidth={2.5} />
-            Alertas de Estoque Mínimo
-          </div>
-          {carregando ? (
-            <p className="loading-text">Carregando...</p>
-          ) : alertas.length > 0 ? (
-            <div className="tabela-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Produto</th>
-                    <th>Estoque Atual</th>
-                    <th>Estoque Mínimo</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {alertas.map((a, i) => (
-                    <tr key={i}>
-                      <td>{a.nomeProduto || a.nome || a.calcado?.nome || '—'}</td>
-                      <td>{a.quantidadeAtual ?? a.saldo ?? '—'}</td>
-                      <td>{a.estoqueMinimo ?? a.minimo ?? '—'}</td>
-                      <td>
-                        <span className="badge badge-alerta" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <CircleAlert size={14} /> Abaixo do mínimo
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="texto-vazio">Nenhum alerta no momento.</p>
-          )}
-        </div>
 
         {/* Card de Itens Abaixo do Estoque Mínimo */}
         <div className="card">
@@ -121,23 +82,25 @@ export default function DashboardPage() {
                 <thead>
                   <tr>
                     <th>Calçado</th>
-                    <th>Saldo Atual</th>
-                    <th>Mínimo</th>
+                    <th>Marca</th>
+                    <th>Quantidade Atual</th>
+                    <th>Estoque Mínimo</th>
                   </tr>
                 </thead>
                 <tbody>
                   {minimo.map((m, i) => (
                     <tr key={i}>
-                      <td>{m.calcado?.nome || m.localizacao || '—'}</td>
-                      <td>{m.saldo ?? m.quantidade ?? '—'}</td>
-                      <td>{m.estoqueMinimo ?? m.minimo ?? '—'}</td>
+                      <td>{m.modelo ?? '—'}</td>
+                      <td>{m.marca ?? '—'}</td>
+                      <td>{m.quantidadeAtual ?? '—'}</td>
+                      <td>{m.quantidadeMinima ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="texto-vazio">Todos os calçados estão com estoque adequado.</p>
+            <p className="texto-vazio">Nenhum calçado abaixo do estoque mínimo.</p>
           )}
         </div>
       </main>
