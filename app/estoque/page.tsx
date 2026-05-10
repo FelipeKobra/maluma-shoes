@@ -6,18 +6,18 @@ import { calcadosAPI, estoqueAPI, movimentacoesAPI, alertasAPI, ordemMovimentaca
 
 import {
   Archive,
-  AlertTriangle,
   CheckCircle2,
   AlertCircle,
-  Search
+  Search,
+  Plus
 } from 'lucide-react';
 import type { PosicaoEstoque, TipoMovimento, MovimentoPayload } from '@/types';
 
 export default function EstoquePage() {
   const [estoque, setEstoque] = useState<PosicaoEstoque[]>([]);
-  const [minimo, setMinimo] = useState<PosicaoEstoque[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [modalAberto, setModalAberto] = useState(false);
+  const [modalCriarAberto, setModalCriarAberto] = useState(false);
 
   useEffect(() => {
     carregarTudo();
@@ -26,12 +26,11 @@ export default function EstoquePage() {
   async function carregarTudo() {
     setCarregando(true);
     try {
-      const [listaEstoque, listaMinimo] = await Promise.all([
+      const [listaEstoque] = await Promise.all([
         estoqueAPI.listar(),
         estoqueAPI.minimo(),
       ]);
       setEstoque(Array.isArray(listaEstoque) ? listaEstoque : []);
-      setMinimo(Array.isArray(listaMinimo) ? listaMinimo : []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -51,9 +50,19 @@ export default function EstoquePage() {
         </div>
 
         <div className="card">
-          <div className="card-title">
-            <Archive size={20} strokeWidth={2.5} /> Posição de Estoque
+          <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Archive size={20} strokeWidth={2.5} /> Posição de Estoque
+            </div>
+            <button 
+              className="btn-primary" 
+              onClick={() => setModalCriarAberto(true)}
+              style={{ padding: '6px 12px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px' }}
+            >
+              <Plus size={16} /> Nova Posição
+            </button>
           </div>
+
           {carregando ? (
             <p className="loading-text">Carregando...</p>
           ) : estoque.length === 0 ? (
@@ -80,8 +89,8 @@ export default function EstoquePage() {
                       <tr key={i.id}>
                         <td>{i.id}</td>
                         <td>{i.cod_localizacao ?? '—'}</td>
-                        <td>{qtdAtual ?? '—'}</td>
-                        <td>{min ?? '—'}</td>
+                        <td>{qtdAtual}</td>
+                        <td>{min}</td>
                         <td>{i.ultimo_abastecimento ?? '—'}</td>
                         <td>
                           {baixo ? (
@@ -104,92 +113,178 @@ export default function EstoquePage() {
         </div>
       </main>
 
+      {/* Modal de Movimentação */}
       {modalAberto && (
         <ModalMovimento
           onFechar={() => setModalAberto(false)}
           onSalvar={() => { setModalAberto(false); carregarTudo(); }}
         />
       )}
+
+      {/* Modal de Criação de Posição */}
+      {modalCriarAberto && (
+        <ModalCriarPosicao 
+          onFechar={() => setModalCriarAberto(false)}
+          onSalvar={() => { setModalCriarAberto(false); carregarTudo(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ModalCriarPosicao({ onFechar, onSalvar }: { onFechar: () => void; onSalvar: () => void }) {
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState('');
+  const [formData, setFormData] = useState({
+    cod_localizacao: '',
+    quantidade_atual: '',
+    quantidade_minimo: '',
+    quantidade_maximo: '100',
+    para_mostruario: false
+  });
+
+  async function handleSalvar() {
+    if (!formData.cod_localizacao) {
+      setErro('O código de localização é obrigatório.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const payload = {
+        cod_localizacao: formData.cod_localizacao,
+        quantidade_atual: Number(formData.quantidade_atual) || 0,
+        quantidade_minimo: Number(formData.quantidade_minimo) || 0,
+        quantidade_maximo: Number(formData.quantidade_maximo) || 0,
+        para_mostruario: formData.para_mostruario,
+        ultima_contagem: new Date().toISOString()
+      };
+      await estoqueAPI.criar(payload);
+      onSalvar();
+    } catch (err: any) {
+      setErro(err.message || 'Erro ao criar posição.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="modal" onClick={(e) => e.target === e.currentTarget && onFechar()}>
+      <div className="modal-box">
+        <div className="modal-header" style={{ textAlign: 'center' }}>
+          <h2>Nova Posição de Estoque</h2>
+        </div>
+
+        <div className="secao-modal">
+          {erro && <div className="msg-erro" style={{ marginBottom: '16px' }}>{erro}</div>}
+          
+          <div className="campo">
+            <label>Código de Localização *</label>
+            <input 
+              type="text" 
+              value={formData.cod_localizacao} 
+              onChange={(e) => setFormData({...formData, cod_localizacao: e.target.value})} 
+              placeholder="Ex: A1-B2" 
+            />
+          </div>
+
+          <div className="campo">
+            <label>Quantidade Atual</label>
+            <input 
+              min="0"
+              type="number" 
+              value={formData.quantidade_atual} 
+              onChange={(e) => setFormData({...formData, quantidade_atual: e.target.value})} 
+            />
+          </div>
+
+          <div className="campo">
+            <label>Quantidade Mínima</label>
+            <input 
+              min="1"
+              type="number" 
+              value={formData.quantidade_minimo} 
+              onChange={(e) => setFormData({...formData, quantidade_minimo: e.target.value})} 
+            />
+          </div>
+
+          <div className="campo">
+            <label>Quantidade Máxima</label>
+            <input 
+              min="1"
+              type="number" 
+              value={formData.quantidade_maximo} 
+              onChange={(e) => setFormData({...formData, quantidade_maximo: e.target.value})} 
+            />
+          </div>
+
+          <div className="campo" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '8px' }}>
+            <input 
+              type="checkbox" 
+              id="mostruario" 
+              checked={formData.para_mostruario} 
+              onChange={(e) => setFormData({...formData, para_mostruario: e.target.checked})} 
+              style={{ width: '18px', height: '18px', cursor: 'pointer' }} 
+            />
+            <label htmlFor="mostruario" style={{ marginBottom: 0, cursor: 'pointer' }}>
+              Para Mostruário?
+            </label>
+          </div>
+
+          <div className="modal-botoes" style={{ marginTop: '32px' }}>
+            <button className="btn-secondary" onClick={onFechar}>
+              Cancelar
+            </button>
+            <button 
+              className="btn-primary" 
+              onClick={handleSalvar} 
+              disabled={loading}
+              style={{ backgroundColor: '#db707a' }} // Mantendo a cor da sua identidade visual
+            >
+              {loading ? 'Salvando...' : 'Criar Posição'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 // ---- Modal de Movimentação ----
-interface ModalMovimentoProps {
-  onFechar: () => void;
-  onSalvar: () => void;
-}
-
-function ModalMovimento({ onFechar, onSalvar }: ModalMovimentoProps) {
-  // Estados para as opções do backend
+function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar: () => void }) {
   const [opcoesCalcados, setOpcoesCalcados] = useState<{ id: number, modelo: string }[]>([]);
   const [opcoesPosicoes, setOpcoesPosicoes] = useState<{ id: number, cod_localizacao: string }[]>([]);
-
-  // Estados da Movimentação (Esquerda)
   const [tipo, setTipo] = useState<TipoMovimento>('ENTRADA');
   const [calcadoId, setCalcadoId] = useState('');
   const [posicaoEstoqueId, setPosicaoId] = useState('');
   const [quantidade, setQuantidade] = useState('');
   const [motivo, setMotivo] = useState('');
-
-  // Estados da Ordem (Direita)
   const [isCriandoOrdem, setIsCriandoOrdem] = useState(false);
   const [buscaOrdem, setBuscaOrdem] = useState('');
   const [ordemData, setOrdemData] = useState({
-    data_emissao: '',
-    empresa: '',
-    cnpj: '',
-    numero_ordem: '',
-    status: 'PROCESSADO',
-    valor_total: ''
+    data_emissao: '', empresa: '', cnpj: '', numero_ordem: '', status: 'PROCESSADO', valor_total: ''
   });
-
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Busca dados iniciais para os selects
   useEffect(() => {
     async function buscarOpcoes() {
       try {
-        const dataCalcados = await calcadosAPI.listar();
-        const dataPosicoes = await estoqueAPI.listar();
-
-        // Corrigindo o erro de 'string | undefined'
-        const calcadosFormatados = dataCalcados.map(c => ({
-          id: c.id,
-          // O '??' garante que se for undefined, vira uma string, resolvendo o erro ts(2345)
-          modelo: c.modelo ?? "Modelo não informado"
-        }));
-
-        const posicoesFormatadas = dataPosicoes.map(p => ({
-          id: p.id,
-          // O mesmo para a localização
-          cod_localizacao: p.cod_localizacao ?? "Sem local"
-        }));
-
-        setOpcoesCalcados(calcadosFormatados);
-        setOpcoesPosicoes(posicoesFormatadas);
-
-      } catch (err) {
-        console.error("Erro ao carregar opções:", err);
-        setErro("Erro ao carregar listas de seleção.");
-      }
+        const [dataCalcados, dataPosicoes] = await Promise.all([
+          calcadosAPI.listar(),
+          estoqueAPI.listar()
+        ]);
+        setOpcoesCalcados(dataCalcados.map(c => ({ id: c.id, modelo: c.modelo ?? "Sem modelo" })));
+        setOpcoesPosicoes(dataPosicoes.map(p => ({ id: p.id, cod_localizacao: p.cod_localizacao ?? "Sem local" })));
+      } catch (err) { setErro("Erro ao carregar listas."); }
     }
-
     buscarOpcoes();
   }, []);
 
-  // FUNÇÃO ATUALIZADA: Pesquisa real no backend
   const pesquisarOrdem = async () => {
     if (!buscaOrdem) return;
-
-    setErro('');
     setLoading(true);
-
     try {
       const data = await ordemMovimentacaoAPI.buscarPorNumero(buscaOrdem);
-
-      // Seta os atributos nos campos
       setOrdemData({
         data_emissao: data.data_emissao ? data.data_emissao.slice(0, 16) : '',
         empresa: data.empresa || '',
@@ -198,216 +293,91 @@ function ModalMovimento({ onFechar, onSalvar }: ModalMovimentoProps) {
         status: data.status || 'PROCESSADO',
         valor_total: data.valor_total || ''
       });
-
       setIsCriandoOrdem(false);
-    } catch (err: unknown) {
-      setErro(err instanceof Error ? err.message : 'Erro ao buscar ordem de movimentação.');
-
-      setOrdemData({
-        data_emissao: '',
-        empresa: '',
-        cnpj: '',
-        numero_ordem: '',
-        status: 'PROCESSADO',
-        valor_total: ''
-      });
-
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const iniciarCriacao = () => {
-    setErro('');
-    setOrdemData({
-      data_emissao: new Date().toISOString().slice(0, 16),
-      empresa: '',
-      cnpj: '',
-      numero_ordem: '',
-      status: 'PROCESSADO',
-      valor_total: ''
-    });
-    setBuscaOrdem('');
-    setIsCriandoOrdem(true);
+    } catch (err) { setErro("Ordem não encontrada."); }
+    finally { setLoading(false); }
   };
 
   async function salvar() {
-    setErro('');
     if (!calcadoId || !posicaoEstoqueId || !quantidade || !ordemData.numero_ordem) {
-      setErro('Preencha os campos de estoque e selecione/crie uma Ordem.');
+      setErro('Preencha os campos obrigatórios.');
       return;
     }
-
     setLoading(true);
-    const payload = {
-      calcadoId: Number(calcadoId),
-      posicaoEstoqueId: Number(posicaoEstoqueId),
-      quantidade: Number(quantidade),
-      motivo,
-      ordemMovimentacao: {
-        ...ordemData,
-        tipo
-      },
-    };
-
-    console.log("PAYLOAD MOV: " + payload);
-
     try {
-      const movimentacao = await estoqueAPI.mover(payload);
-
-      console.log("MOV CONCLUIDA: " + movimentacao);
-      
+      const payload = {
+        calcadoId: Number(calcadoId),
+        posicaoEstoqueId: Number(posicaoEstoqueId),
+        quantidade: Number(quantidade),
+        motivo: motivo || "",
+        ordemMovimentacao: {
+          ...ordemData,
+          data_emissao: ordemData.data_emissao ? new Date(ordemData.data_emissao).toISOString() : new Date().toISOString(),
+          tipo: tipo,
+          valor_total: ordemData.valor_total ? Number(ordemData.valor_total).toFixed(2) : "0.00"
+        }
+      };
+      await estoqueAPI.mover(payload);
       onSalvar();
-    } catch (err: unknown) {
-      setErro(err instanceof Error ? err.message : 'Erro ao movimentar.');
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { setErro(err.message || 'Erro na movimentação.'); }
+    finally { setLoading(false); }
   }
 
   return (
     <div className="modal" onClick={(e) => e.target === e.currentTarget && onFechar()}>
       <div className="modal-box modal-largo">
-        <div className="modal-header">
-          <h2>Movimentar Estoque</h2>
-        </div>
-
-        {/* Mensagem de erro que aparece lá em cima */}
-        {erro && <div className="msg-erro" style={{ margin: '15px 10px 10px 10px' }}>{erro}</div>}
-
+        <div className="modal-header"><h2>Movimentar Estoque</h2></div>
+        {erro && <div className="msg-erro" style={{ margin: '10px' }}>{erro}</div>}
         <div className="modal-content">
           <div className="secao-modal">
             <div className="subtitulo-modal">Dados do Item</div>
-
             <div className="campo">
-              <label>Tipo de Movimentação *</label>
+              <label>Tipo *</label>
               <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoMovimento)}>
                 <option value="ENTRADA">Entrada</option>
                 <option value="SAIDA">Saída</option>
               </select>
             </div>
-
             <div className="campo">
               <label>Calçado *</label>
               <select value={calcadoId} onChange={(e) => setCalcadoId(e.target.value)}>
-                <option value="">Selecione um calçado</option>
-                {opcoesCalcados.map((c) => (
-                  <option key={c.id} value={c.id}>{c.modelo}</option>
-                ))}
+                <option value="">Selecione</option>
+                {opcoesCalcados.map(c => <option key={c.id} value={c.id}>{c.modelo}</option>)}
               </select>
             </div>
-
             <div className="campo">
-              <label>Posição de Estoque *</label>
+              <label>Posição *</label>
               <select value={posicaoEstoqueId} onChange={(e) => setPosicaoId(e.target.value)}>
-                <option value="">Selecione uma posição no estoque</option>
-                {opcoesPosicoes.map((p) => (
-                  <option key={p.id} value={p.id}>{p.cod_localizacao}</option>
-                ))}
+                <option value="">Selecione</option>
+                {opcoesPosicoes.map(p => <option key={p.id} value={p.id}>{p.cod_localizacao}</option>)}
               </select>
             </div>
-
             <div className="campo">
               <label>Quantidade *</label>
-              <input type="number" min="1" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder="Ex: 11" />
+              <input type="number" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
             </div>
-
-            <div className="campo">
-              <label>Motivo</label>
-              <input type="text" value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex: Abastecimento Nike" />
-            </div>
+            <div className="campo"><label>Motivo</label><input type="text" value={motivo} onChange={(e) => setMotivo(e.target.value)} /></div>
           </div>
-
           <div className="secao-modal direita">
-            <div className="subtitulo-modal">
-              Ordem de Movimentação
-              <button className="btn-pequeno btn-primary" onClick={iniciarCriacao}>+ Criar Nova</button>
+            <div className="subtitulo-modal">Ordem <button className="btn-primary" onClick={() => setIsCriandoOrdem(true)}>+ Nova</button></div>
+            <div className="campo" style={{ display: 'flex', gap: '5px' }}>
+              <input type="text" placeholder="Nº Ordem" value={buscaOrdem} onChange={(e) => setBuscaOrdem(e.target.value)} />
+              <button className="btn-secondary" onClick={pesquisarOrdem}><Search size={16}/></button>
             </div>
-
-            <div className="campo" style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
-              <div style={{ flex: 1 }}>
-                <label>Pesquisar Ordem Existente</label>
-                <input
-                  type="text"
-                  value={buscaOrdem}
-                  onChange={(e) => setBuscaOrdem(e.target.value)}
-                  placeholder="Nº da Ordem"
-                  onKeyPress={(e) => e.key === 'Enter' && pesquisarOrdem()}
-                />
-              </div>
-              <button
-                className="btn-secondary"
-                disabled={loading}
-                style={{
-                  padding: '11px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-                onClick={pesquisarOrdem}
-              >
-                <Search size={18} strokeWidth={2.5} />
-              </button>
-            </div>
-
-            <hr style={{ margin: '20px 0', border: '0', borderTop: '1px solid var(--border)' }} />
-
-            <div className="campo">
-              <label>Número da Ordem</label>
-              <input
-                disabled={!isCriandoOrdem}
-                value={ordemData.numero_ordem}
-                onChange={(e) => setOrdemData({ ...ordemData, numero_ordem: e.target.value })}
-              />
-            </div>
-
-            <div className="campo">
-              <label>Empresa / Fornecedor</label>
-              <input
-                disabled={!isCriandoOrdem}
-                value={ordemData.empresa}
-                onChange={(e) => setOrdemData({ ...ordemData, empresa: e.target.value })}
-              />
-            </div>
-
-            <div className="campo">
-              <label>CNPJ</label>
-              <input
-                disabled={!isCriandoOrdem}
-                value={ordemData.cnpj}
-                onChange={(e) => setOrdemData({ ...ordemData, cnpj: e.target.value })}
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-              <div className="campo">
-                <label>Data Emissão</label>
-                <input
-                  type="datetime-local"
-                  disabled={!isCriandoOrdem}
-                  value={ordemData.data_emissao}
-                  onChange={(e) => setOrdemData({ ...ordemData, data_emissao: e.target.value })}
-                />
-              </div>
-              <div className="campo">
-                <label>Valor Total</label>
-                <input
-                  type="number"
-                  disabled={!isCriandoOrdem}
-                  value={ordemData.valor_total}
-                  onChange={(e) => setOrdemData({ ...ordemData, valor_total: e.target.value })}
-                />
-              </div>
+            <hr style={{ margin: '15px 0', opacity: 0.2 }} />
+            <div className="campo"><label>Número</label><input disabled={!isCriandoOrdem} value={ordemData.numero_ordem} onChange={(e) => setOrdemData({...ordemData, numero_ordem: e.target.value})} /></div>
+            <div className="campo"><label>Empresa</label><input disabled={!isCriandoOrdem} value={ordemData.empresa} onChange={(e) => setOrdemData({...ordemData, empresa: e.target.value})} /></div>
+            <div className="campo"><label>CNPJ</label><input disabled={!isCriandoOrdem} value={ordemData.cnpj} onChange={(e) => setOrdemData({...ordemData, cnpj: e.target.value})} /></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <div className="campo"><label>Data</label><input type="datetime-local" disabled={!isCriandoOrdem} value={ordemData.data_emissao} onChange={(e) => setOrdemData({...ordemData, data_emissao: e.target.value})} /></div>
+              <div className="campo"><label>Valor</label><input type="number" disabled={!isCriandoOrdem} value={ordemData.valor_total} onChange={(e) => setOrdemData({...ordemData, valor_total: e.target.value})} /></div>
             </div>
           </div>
         </div>
-
         <div className="modal-footer">
           <div className="modal-botoes">
             <button className="btn-secondary" onClick={onFechar}>Cancelar</button>
-            <button className="btn-primary" onClick={salvar} disabled={loading}>
-              {loading ? 'Processando...' : 'Confirmar Movimentação'}
-            </button>
+            <button className="btn-primary" onClick={salvar} disabled={loading}>{loading ? 'Processando...' : 'Confirmar'}</button>
           </div>
         </div>
       </div>

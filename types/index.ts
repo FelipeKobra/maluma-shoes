@@ -40,6 +40,15 @@ export interface Calcado {
   calcado?: { nome?: string };
 }*/
 
+export interface CriarPosicaoPayload {
+  cod_localizacao: string;
+  quantidade_atual: number;
+  quantidade_minimo: number;
+  quantidade_maximo: number;
+  ultima_contagem: string;
+  para_mostruario: boolean;
+}
+
 export interface PaginatedResponse<T> {
   data: T[];
   total: number;

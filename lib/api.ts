@@ -7,7 +7,7 @@
 //   localStorage e window.location são chamados só no cliente
 // ============================================================
 
-import type { Calcado, PosicaoEstoque, Movimentacao, Alerta, Usuario, MovimentoPayload, OrdemMovimentacao, MovimentacaoResponse, PaginatedResponse } from '@/types';
+import type { Calcado, CriarPosicaoPayload,  PosicaoEstoque, Movimentacao, Alerta, Usuario, MovimentoPayload, OrdemMovimentacao, MovimentacaoResponse, PaginatedResponse } from '@/types';
 
 const API = 'https://maluma-shoes.vercel.app';
 
@@ -68,10 +68,23 @@ export const calcadosAPI = {
 };
 
 export const estoqueAPI = {
-  listar: () => apiFetch<PosicaoEstoque[]>('/api/posicao-estoque'),
-  minimo: () => apiFetch<PosicaoEstoque[]>('/api/posicao-estoque/minimo'),
+  listar: () => 
+    apiFetch<PosicaoEstoque[]>('/api/posicao-estoque'),
+    
+  minimo: () => 
+    apiFetch<PosicaoEstoque[]>('/api/posicao-estoque/minimo'),
+    
   mover: (dados: MovimentoPayload) =>
-    apiFetch<MovimentacaoResponse>('/api/posicao-estoque/moverEstoque', { method: 'POST', body: JSON.stringify(dados) }),
+    apiFetch<MovimentacaoResponse>('/api/posicao-estoque/moverEstoque', { 
+      method: 'POST', 
+      body: JSON.stringify(dados) 
+    }),
+
+  criar: (dados: CriarPosicaoPayload) =>
+    apiFetch<PosicaoEstoque>('/api/posicao-estoque', { 
+      method: 'POST', 
+      body: JSON.stringify(dados) 
+    }),
 };
 
 // Defina uma interface para os filtros para manter o TypeScript feliz
