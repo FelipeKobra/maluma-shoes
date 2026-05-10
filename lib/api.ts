@@ -31,13 +31,20 @@ async function apiFetch<T>(path: string, options: RequestInit & { _csv?: boolean
 
   const response = await fetch(`${API}${path}`, { ...options, headers });
 
-  if (response.status === 401) {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    }
-    throw new Error('Não autorizado');
+  // lib/api.ts (ou onde estiver seu apiFetch)
+
+if (response.status === 401) {
+  if (typeof window !== 'undefined') {
+    // Limpa o localStorage
+    localStorage.removeItem('token');
+    
+    // ADICIONE ISSO: Limpa o Cookie de autenticação
+    document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    
+    window.location.href = '/login';
   }
+  throw new Error('Não autorizado');
+}
 
   // Para CSV, retornamos a Response bruta
   if (options._csv) return response as unknown as T;

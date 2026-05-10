@@ -26,25 +26,33 @@ export default function LoginPage() {
   const [erro, setErro]         = useState<string>('');
   const [carregando, setCarregando] = useState<boolean>(false);
 
-  async function handleLogin() {
-    if (!email || !senha) {
-      setErro('Preencha o email e a senha.');
-      return;
-    }
-    setErro('');
-    setCarregando(true);
-    try {
-      const token = await fazerLogin(email, senha);
-      localStorage.setItem('token', token);
-      router.push('/dashboard');
-    } catch (err: unknown) {
-      // err é 'unknown' no TypeScript — precisamos verificar o tipo antes de usar
-      const msg = err instanceof Error ? err.message : 'Erro ao fazer login.';
-      setErro(msg);
-    } finally {
-      setCarregando(false);
-    }
+  // app/login/page.tsx
+
+async function handleLogin() {
+  if (!email || !senha) {
+    setErro('Preencha o email e a senha.');
+    return;
   }
+  setErro('');
+  setCarregando(true);
+  try {
+    const token = await fazerLogin(email, senha);
+    
+    // 1. Mantém o localStorage para o seu api.ts atual não quebrar
+    localStorage.setItem('token', token);
+
+    // 2. ADICIONE ISSO: Salva o Cookie para o Middleware conseguir ler
+    // O nome deve ser EXATAMENTE 'auth_token' como está no seu middleware
+    document.cookie = `auth_token=${token}; path=/; max-age=86400; SameSite=Strict`;
+
+    router.push('/dashboard');
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Erro ao fazer login.';
+    setErro(msg);
+  } finally {
+    setCarregando(false);
+  }
+}
 
   // Substitui o addEventListener('keydown') do auth.js
   function handleKeyDown(e: KeyboardEvent) {
