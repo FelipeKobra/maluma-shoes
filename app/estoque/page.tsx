@@ -84,7 +84,9 @@ export default function EstoquePage() {
                   {estoque.map((i) => {
                     const qtdAtual = i.quantidade_atual ?? 0;
                     const min = i.quantidade_minimo ?? 0;
+                    const max = i.quantidade_maximo ?? 0;
                     const baixo = qtdAtual < min;
+                    const alto = qtdAtual > max
                     return (
                       <tr key={i.id}>
                         <td>{i.id}</td>
@@ -97,7 +99,11 @@ export default function EstoquePage() {
                             <span className="badge badge-alerta" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                               <AlertCircle size={14} /> Baixo
                             </span>
-                          ) : (
+                          ) : alto ? (
+                          <span className="badge badge-alerta" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <AlertCircle size={14} /> Alto
+                            </span>  
+                            ) : (
                             <span className="badge badge-entrada" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                               <CheckCircle2 size={14} /> OK
                             </span>
