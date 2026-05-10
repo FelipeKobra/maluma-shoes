@@ -40,6 +40,12 @@ export interface Calcado {
   calcado?: { nome?: string };
 }*/
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+}
+
 export interface PosicaoEstoque {
   id: number;
   cod_localizacao?: string;
@@ -63,6 +69,18 @@ export interface Movimentacao {
   data_hora?: string;
   itensMovimentacao?: itensMovimentacao;
   posicaoEstoque?: PosicaoEstoque;
+}
+
+export interface MovimentacaoResponse {
+  id: number;
+  tipo?: string;
+  responsavel?: string;
+  saldo_anterior?: number;
+  saldo_posterior?: number;
+  motivo?: string;
+  data_hora?: string;
+  itensMovimentacao?: number;
+  posicaoEstoque?: number;
 }
 
 export interface Alerta {

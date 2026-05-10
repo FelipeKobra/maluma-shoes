@@ -7,7 +7,7 @@
 //   localStorage e window.location são chamados só no cliente
 // ============================================================
 
-import type { Calcado, PosicaoEstoque, Movimentacao, Alerta, Usuario, MovimentoPayload, OrdemMovimentacao } from '@/types';
+import type { Calcado, PosicaoEstoque, Movimentacao, Alerta, Usuario, MovimentoPayload, OrdemMovimentacao, MovimentacaoResponse, PaginatedResponse } from '@/types';
 
 const API = 'https://maluma-shoes.vercel.app';
 
@@ -71,7 +71,7 @@ export const estoqueAPI = {
   listar: () => apiFetch<PosicaoEstoque[]>('/api/posicao-estoque'),
   minimo: () => apiFetch<PosicaoEstoque[]>('/api/posicao-estoque/minimo'),
   mover: (dados: MovimentoPayload) =>
-    apiFetch<void>('/api/posicao-estoque/moverEstoque', { method: 'POST', body: JSON.stringify(dados) }),
+    apiFetch<MovimentacaoResponse>('/api/posicao-estoque/moverEstoque', { method: 'POST', body: JSON.stringify(dados) }),
 };
 
 // Defina uma interface para os filtros para manter o TypeScript feliz
@@ -100,7 +100,7 @@ export const movimentacoesAPI = {
     const query = params.toString();
     const path = `/api/movimentacao/historico${query ? `?${query}` : ''}`;
     
-    return apiFetch<Movimentacao[]>(path);
+    return apiFetch<PaginatedResponse<Movimentacao> | Movimentacao[]>(path);
   },
   
   listar: () => apiFetch<Movimentacao[]>('/api/movimentacao'),
@@ -112,9 +112,11 @@ export const alertasAPI = {
 
 export const usuariosAPI = {
   listar: () => apiFetch<Usuario[]>('/api/usuarios'),
-  criar: (dados: { nome: string; email: string; senha: string }) =>
+  
+  criar: (dados: { nome: string; email: string; senha: string; role: string }) =>
     apiFetch<Usuario>('/api/usuarios', { method: 'POST', body: JSON.stringify(dados) }),
-  atualizar: (id: number, dados: { nome: string; email: string }) =>
+    
+  atualizar: (id: number, dados: { nome: string; email: string; role: string }) =>
     apiFetch<Usuario>(`/api/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(dados) }),
 };
 

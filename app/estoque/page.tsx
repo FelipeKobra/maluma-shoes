@@ -250,8 +250,13 @@ function ModalMovimento({ onFechar, onSalvar }: ModalMovimentoProps) {
       },
     };
 
+    console.log("PAYLOAD MOV: " + payload);
+
     try {
-      await estoqueAPI.mover(payload);
+      const movimentacao = await estoqueAPI.mover(payload);
+
+      console.log("MOV CONCLUIDA: " + movimentacao);
+      
       onSalvar();
     } catch (err: unknown) {
       setErro(err instanceof Error ? err.message : 'Erro ao movimentar.');

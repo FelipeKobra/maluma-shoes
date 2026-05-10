@@ -1,21 +1,21 @@
 'use client';
 
-// ============================================================
-// USUARIOS/PAGE.TSX
-// Equivalente a: usuarios.html + usuarios.js
-// ============================================================
-
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { usuariosAPI } from '@/lib/api';
 import type { Usuario } from '@/types';
+
+// Definimos as roles possíveis para evitar erros de digitação
+type UserRole = 'ADMIN' | 'OPERADOR';
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios]       = useState<Usuario[]>([]);
   const [carregando, setCarregando]   = useState(true);
   const [erro, setErro]               = useState('');
   const [modalAberto, setModalAberto] = useState(false);
-  const [editando, setEditando]       = useState<{ id: number; nome: string; email: string } | null>(null);
+  
+  // Atualizamos o estado de "editando" para incluir a role
+  const [editando, setEditando]       = useState<{ id: number; nome: string; email: string; role: UserRole } | null>(null);
 
   useEffect(() => {
     carregarUsuarios();
@@ -50,8 +50,6 @@ export default function UsuariosPage() {
             <p className="loading-text">Carregando...</p>
           ) : erro ? (
             <p className="msg-erro">{erro}</p>
-          ) : usuarios.length === 0 ? (
-            <p className="texto-vazio">Nenhum usuário encontrado.</p>
           ) : (
             <div className="tabela-wrapper">
               <table>
@@ -75,7 +73,13 @@ export default function UsuariosPage() {
                           <button
                             className="btn-edit"
                             onClick={() => {
-                              setEditando({ id: u.id, nome: u.nome || '', email: u.email || '' });
+                              // Passamos a role para o estado de edição
+                              setEditando({ 
+                                id: u.id, 
+                                nome: u.nome || '', 
+                                email: u.email || '', 
+                                role: (u.role as UserRole) || 'OPERADOR' 
+                              });
                               setModalAberto(true);
                             }}
                           >
@@ -103,9 +107,9 @@ export default function UsuariosPage() {
   );
 }
 
-// ---- Modal ----
+// ---- Modal Atualizado ----
 interface ModalUsuarioProps {
-  editando: { id: number; nome: string; email: string } | null;
+  editando: { id: number; nome: string; email: string; role: UserRole } | null;
   onFechar: () => void;
   onSalvar: () => void;
 }
@@ -113,6 +117,7 @@ interface ModalUsuarioProps {
 function ModalUsuario({ editando, onFechar, onSalvar }: ModalUsuarioProps) {
   const [nome, setNome]   = useState(editando?.nome || '');
   const [email, setEmail] = useState(editando?.email || '');
+  const [role, setRole]   = useState<UserRole>(editando?.role || 'OPERADOR'); // Default: OPERADOR
   const [senha, setSenha] = useState('');
   const [erro, setErro]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -122,9 +127,9 @@ function ModalUsuario({ editando, onFechar, onSalvar }: ModalUsuarioProps) {
     setLoading(true);
     try {
       if (editando) {
-        await usuariosAPI.atualizar(editando.id, { nome, email });
+        await usuariosAPI.atualizar(editando.id, { nome, email, role });
       } else {
-        await usuariosAPI.criar({ nome, email, senha });
+        await usuariosAPI.criar({ nome, email, senha, role });
       }
       onSalvar();
     } catch (err: unknown) {
@@ -139,18 +144,37 @@ function ModalUsuario({ editando, onFechar, onSalvar }: ModalUsuarioProps) {
       <div className="modal-box">
         <h2>{editando ? 'Editar Usuário' : 'Novo Usuário'}</h2>
         {erro && <div className="msg-erro">{erro}</div>}
-        <div className="campo"><label>Nome</label>
+        
+        <div className="campo">
+          <label>Nome</label>
           <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo" />
         </div>
-        <div className="campo"><label>Email</label>
+
+        <div className="campo">
+          <label>Email</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
         </div>
-        {/* Só mostra campo de senha no cadastro, não na edição */}
+
+        {/* NOVO CAMPO: Role */}
+        <div className="campo">
+          <label>Perfil de Acesso (Role)</label>
+          <select 
+            value={role} 
+            onChange={(e) => setRole(e.target.value as UserRole)}
+            className="select-custom" // Certifique-se de ter esse estilo no CSS
+          >
+            <option value="OPERADOR">OPERADOR</option>
+            <option value="ADMIN">ADMIN</option>
+          </select>
+        </div>
+
         {!editando && (
-          <div className="campo"><label>Senha</label>
+          <div className="campo">
+            <label>Senha</label>
             <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="••••••••" />
           </div>
         )}
+
         <div className="modal-botoes">
           <button className="btn-secondary" onClick={onFechar}>Cancelar</button>
           <button className="btn-primary" onClick={salvar} disabled={loading}>

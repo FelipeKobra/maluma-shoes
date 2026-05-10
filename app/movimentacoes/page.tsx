@@ -29,33 +29,37 @@ export default function MovimentacoesPage() {
   setErro('');
   setCarregando(true);
 
-  // Exemplo de filtros vindos de algum estado do seu componente
-  const filtros: FiltrosHistorico = {
-    page: 1,
-    limit: 10,
-    // tipo: 'ENTRADA'
-  };
+  const filtros: FiltrosHistorico = { page: 1, limit: 10 };
 
   try {
     let listaFinal: Movimentacao[] = [];
 
     try {
-      // 1. Tenta buscar o histórico paginado
+      // 1. A busca paginada provavelmente retorna { data: Movimentacao[], total: number }
       const response = await movimentacoesAPI.historico(filtros);
-      listaFinal = response // Acessa a propriedade 'data' tipada
+
+      console.log("HISTORICO: " + response);
       
-      // Se você tiver um estado para o total: 
-      // setTotalRegistros(response.total);
+      // CORREÇÃO: Verifique se o retorno é um array ou se está dentro de .data
+      if (Array.isArray(response)) {
+        listaFinal = response;
+      } else if (response && typeof response === 'object' && 'data' in response) {
+        // Se a API retornar o padrão paginado
+        listaFinal = (response as any).data;
+      } else {
+        listaFinal = [];
+      }
       
-    } catch {
-      // 2. Fallback para a listagem simples caso o histórico falhe
+    } catch (err) {
+      // 2. Fallback
       const fallback = await movimentacoesAPI.listar();
-      listaFinal = fallback;
+      listaFinal = Array.isArray(fallback) ? fallback : [];
     }
 
     setMovimentacoes(listaFinal);
   } catch (err: unknown) {
     setErro(err instanceof Error ? err.message : 'Erro ao carregar.');
+    setMovimentacoes([]); // Garante que não fique com lixo que cause crash
   } finally {
     setCarregando(false);
   }
