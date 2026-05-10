@@ -92,6 +92,13 @@ export const estoqueAPI = {
       method: 'POST', 
       body: JSON.stringify(dados) 
     }),
+
+  // ADICIONE ESTA FUNÇÃO AQUI:
+  realizarInventario: (dados: { posicaoEstoqueId: number; quantidadeFisica: number; responsavel: string }) =>
+    apiFetch<void>('/api/inventario', {
+      method: 'POST',
+      body: JSON.stringify(dados)
+    }),
 };
 
 // Defina uma interface para os filtros para manter o TypeScript feliz

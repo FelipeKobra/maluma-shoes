@@ -175,7 +175,7 @@ export default function EstoquePage() {
 }
 
 // ==========================================
-// COMPONENTE: ModalInventario
+// COMPONENTE: ModalInventario (CORRIGIDO)
 // ==========================================
 function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEstoque, onFechar: () => void, onSalvar: () => void }) {
   const [qtdFisica, setQtdFisica] = useState<string>(posicao.quantidade_atual?.toString() || '0');
@@ -183,43 +183,46 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
   const [erro, setErro] = useState('');
 
   async function handleSalvarAjuste() {
-    const valorNumerico = Number(qtdFisica);
+  const valorNumerico = Number(qtdFisica);
 
-    if (isNaN(valorNumerico) || valorNumerico < 0) {
-      setErro('A quantidade física deve ser um número maior ou igual a zero.');
-      return;
-    }
-
-    setLoading(true);
-    setErro('');
-
-    try {
-      const response = await fetch('/api/inventario', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          posicaoEstoqueId: posicao.id,
-          quantidadeFisica: valorNumerico,
-          responsavel: "Sistema / Admin" // Idealmente pegar do contexto de usuário
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao processar o inventário.');
-      }
-
-      onSalvar();
-    } catch (err: any) {
-      setErro(err.message || 'Falha na requisição.');
-    } finally {
-      setLoading(false);
-    }
+  if (isNaN(valorNumerico) || valorNumerico < 0) {
+    setErro('A quantidade física deve ser um número maior ou igual a zero.');
+    return;
   }
+
+  setLoading(true);
+  setErro('');
+
+  try {
+    // Agora utilizamos o padrão centralizado da sua API
+    await estoqueAPI.realizarInventario({
+      posicaoEstoqueId: posicao.id,
+      quantidadeFisica: valorNumerico,
+      responsavel: "Sistema / Admin" // Futuramente pode vir do authContext
+    });
+
+    // Emite uma notificação de sucesso (opcional, já que você usa o evento customizado no sistema)
+    window.dispatchEvent(new CustomEvent('nova-notificacao', {
+      detail: {
+        id: Math.random().toString(36).substr(2, 9),
+        mensagem: `Inventário realizado na posição ${posicao.cod_localizacao}`,
+        data: new Date().toISOString(),
+        tipo: 'SUCESSO'
+      }
+    }));
+
+    onSalvar();
+  } catch (err: any) {
+    // O apiFetch já extrai a mensagem de erro do JSON do backend
+    setErro(err.message || 'Falha ao processar inventário.');
+  } finally {
+    setLoading(false);
+  }
+}
 
   return (
     <div className="modal" onClick={(e) => e.target === e.currentTarget && onFechar()}>
-      <div className="modal-box" style={{ maxWidth: '450px' }}>
+      <div className="modal-box">
         <div className="modal-header">
           <h2>Inventário Físico</h2>
         </div>
@@ -227,13 +230,32 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
         <div className="secao-modal">
           {erro && <div className="msg-erro" style={{ marginBottom: '16px' }}>{erro}</div>}
           
-          <div style={{ background: '#f9f9f9', padding: '12px', borderRadius: '6px', marginBottom: '20px', border: '1px solid #eee' }}>
-            <p style={{ margin: '0 0 5px 0', fontSize: '14px' }}><strong>Localização:</strong> {posicao.cod_localizacao}</p>
-            <p style={{ margin: '0 0 5px 0', fontSize: '14px' }}><strong>Qtd. no Sistema:</strong> {posicao.quantidade_atual}</p>
-            <p style={{ margin: '0', fontSize: '14px', color: '#666' }}>
-              <strong>Última Contagem:</strong> {posicao.ultima_contagem ? new Date(posicao.ultima_contagem).toLocaleDateString('pt-BR') : 'Nenhuma'}
-            </p>
+          <div className="subtitulo-modal">Informações do Sistema</div>
+          
+          <div style={{ background: 'rgba(0,0,0,0.03)', padding: '16px', borderRadius: '8px', marginBottom: '24px' }}>
+            <div className="campo" style={{ marginBottom: '12px' }}>
+              <label>Localização</label>
+              <input type="text" value={posicao.cod_localizacao || ''} disabled style={{ background: 'transparent' }} />
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div className="campo" style={{ marginBottom: 0 }}>
+                <label>Qtd. no Sistema</label>
+                <input type="text" value={posicao.quantidade_atual || 0} disabled style={{ background: 'transparent' }} />
+              </div>
+              <div className="campo" style={{ marginBottom: 0 }}>
+                <label>Última Contagem</label>
+                <input 
+                  type="text" 
+                  value={posicao.ultima_contagem ? new Date(posicao.ultima_contagem).toLocaleDateString('pt-BR') : 'Nenhuma'} 
+                  disabled 
+                  style={{ background: 'transparent' }} 
+                />
+              </div>
+            </div>
           </div>
+
+          <div className="subtitulo-modal">Ajuste de Saldo</div>
 
           <div className="campo">
             <label>Quantidade Física (Contada em mãos) *</label>
@@ -245,12 +267,12 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
               placeholder="Ex: 15"
               autoFocus
             />
-            <p style={{ fontSize: '12px', color: '#888', marginTop: '8px' }}>
-              * Ao salvar, a quantidade no sistema será atualizada e uma movimentação de <strong>AJUSTE</strong> será gerada.
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px', lineHeight: '1.4' }}>
+              * Ao salvar, o saldo será atualizado para o valor informado e uma movimentação de <strong>AJUSTE</strong> será registrada no histórico.
             </p>
           </div>
 
-          <div className="modal-botoes" style={{ marginTop: '24px' }}>
+          <div className="modal-botoes" style={{ marginTop: '30px' }}>
             <button className="btn-secondary" onClick={onFechar} disabled={loading}>
               Cancelar
             </button>
@@ -258,9 +280,8 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
               className="btn-primary" 
               onClick={handleSalvarAjuste} 
               disabled={loading}
-              style={{ backgroundColor: '#2c3e50' }}
             >
-              {loading ? 'Salvando...' : 'Salvar Ajuste'}
+              {loading ? 'Processando...' : 'Salvar Ajuste'}
             </button>
           </div>
         </div>
