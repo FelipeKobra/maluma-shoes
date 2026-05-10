@@ -9,15 +9,20 @@ import {
   CheckCircle2,
   AlertCircle,
   Search,
-  Plus
+  Plus,
+  ClipboardCheck
 } from 'lucide-react';
-import type { PosicaoEstoque, TipoMovimento, MovimentoPayload, MovimentacaoResposta} from '@/types';
+import type { PosicaoEstoque, TipoMovimento, MovimentoPayload, MovimentacaoResposta } from '@/types';
 
 export default function EstoquePage() {
   const [estoque, setEstoque] = useState<PosicaoEstoque[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [modalAberto, setModalAberto] = useState(false);
   const [modalCriarAberto, setModalCriarAberto] = useState(false);
+  
+  // Estados para o novo Modal de Inventário
+  const [modalInventarioAberto, setModalInventarioAberto] = useState(false);
+  const [posicaoSelecionada, setPosicaoSelecionada] = useState<PosicaoEstoque | null>(null);
 
   useEffect(() => {
     carregarTudo();
@@ -78,6 +83,7 @@ export default function EstoquePage() {
                     <th>Estoque Mínimo</th>
                     <th>Último Abastecimento</th>
                     <th>Status</th>
+                    <th style={{ textAlign: 'center' }}>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -86,28 +92,42 @@ export default function EstoquePage() {
                     const min = i.quantidade_minimo ?? 0;
                     const max = i.quantidade_maximo ?? 0;
                     const baixo = qtdAtual < min;
-                    const alto = qtdAtual > max
+                    const alto = qtdAtual > max;
+                    
                     return (
                       <tr key={i.id}>
                         <td>{i.id}</td>
                         <td>{i.cod_localizacao ?? '—'}</td>
-                        <td>{qtdAtual}</td>
+                        <td><strong>{qtdAtual}</strong></td>
                         <td>{min}</td>
-                        <td>{i.ultimo_abastecimento ?? '—'}</td>
+                        <td>{i.ultimo_abastecimento ? new Date(i.ultimo_abastecimento).toLocaleDateString('pt-BR') : '—'}</td>
                         <td>
                           {baixo ? (
                             <span className="badge badge-alerta" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                               <AlertCircle size={14} /> Baixo
                             </span>
                           ) : alto ? (
-                          <span className="badge badge-alerta" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                            <span className="badge badge-alerta" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                               <AlertCircle size={14} /> Alto
                             </span>  
-                            ) : (
+                          ) : (
                             <span className="badge badge-entrada" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                               <CheckCircle2 size={14} /> OK
                             </span>
                           )}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <button 
+                            className="btn-secondary"
+                            title="Realizar Inventário / Ajuste"
+                            onClick={() => {
+                              setPosicaoSelecionada(i);
+                              setModalInventarioAberto(true);
+                            }}
+                            style={{ padding: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
+                          >
+                            <ClipboardCheck size={16} /> Inventário
+                          </button>
                         </td>
                       </tr>
                     );
@@ -119,7 +139,7 @@ export default function EstoquePage() {
         </div>
       </main>
 
-      {/* Modal de Movimentação */}
+      {/* Modal de Movimentação Padrão */}
       {modalAberto && (
         <ModalMovimento
           onFechar={() => setModalAberto(false)}
@@ -134,10 +154,124 @@ export default function EstoquePage() {
           onSalvar={() => { setModalCriarAberto(false); carregarTudo(); }}
         />
       )}
+
+      {/* NOVO: Modal de Inventário / Ajuste */}
+      {modalInventarioAberto && posicaoSelecionada && (
+        <ModalInventario 
+          posicao={posicaoSelecionada}
+          onFechar={() => {
+            setModalInventarioAberto(false);
+            setPosicaoSelecionada(null);
+          }}
+          onSalvar={() => {
+            setModalInventarioAberto(false);
+            setPosicaoSelecionada(null);
+            carregarTudo();
+          }}
+        />
+      )}
     </div>
   );
 }
 
+// ==========================================
+// COMPONENTE: ModalInventario
+// ==========================================
+function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEstoque, onFechar: () => void, onSalvar: () => void }) {
+  const [qtdFisica, setQtdFisica] = useState<string>(posicao.quantidade_atual?.toString() || '0');
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState('');
+
+  async function handleSalvarAjuste() {
+    const valorNumerico = Number(qtdFisica);
+
+    if (isNaN(valorNumerico) || valorNumerico < 0) {
+      setErro('A quantidade física deve ser um número maior ou igual a zero.');
+      return;
+    }
+
+    setLoading(true);
+    setErro('');
+
+    try {
+      const response = await fetch('/api/inventario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          posicaoEstoqueId: posicao.id,
+          quantidadeFisica: valorNumerico,
+          responsavel: "Sistema / Admin" // Idealmente pegar do contexto de usuário
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao processar o inventário.');
+      }
+
+      onSalvar();
+    } catch (err: any) {
+      setErro(err.message || 'Falha na requisição.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="modal" onClick={(e) => e.target === e.currentTarget && onFechar()}>
+      <div className="modal-box" style={{ maxWidth: '450px' }}>
+        <div className="modal-header">
+          <h2>Inventário Físico</h2>
+        </div>
+
+        <div className="secao-modal">
+          {erro && <div className="msg-erro" style={{ marginBottom: '16px' }}>{erro}</div>}
+          
+          <div style={{ background: '#f9f9f9', padding: '12px', borderRadius: '6px', marginBottom: '20px', border: '1px solid #eee' }}>
+            <p style={{ margin: '0 0 5px 0', fontSize: '14px' }}><strong>Localização:</strong> {posicao.cod_localizacao}</p>
+            <p style={{ margin: '0 0 5px 0', fontSize: '14px' }}><strong>Qtd. no Sistema:</strong> {posicao.quantidade_atual}</p>
+            <p style={{ margin: '0', fontSize: '14px', color: '#666' }}>
+              <strong>Última Contagem:</strong> {posicao.ultima_contagem ? new Date(posicao.ultima_contagem).toLocaleDateString('pt-BR') : 'Nenhuma'}
+            </p>
+          </div>
+
+          <div className="campo">
+            <label>Quantidade Física (Contada em mãos) *</label>
+            <input 
+              type="number" 
+              min="0"
+              value={qtdFisica} 
+              onChange={(e) => setQtdFisica(e.target.value)}
+              placeholder="Ex: 15"
+              autoFocus
+            />
+            <p style={{ fontSize: '12px', color: '#888', marginTop: '8px' }}>
+              * Ao salvar, a quantidade no sistema será atualizada e uma movimentação de <strong>AJUSTE</strong> será gerada.
+            </p>
+          </div>
+
+          <div className="modal-botoes" style={{ marginTop: '24px' }}>
+            <button className="btn-secondary" onClick={onFechar} disabled={loading}>
+              Cancelar
+            </button>
+            <button 
+              className="btn-primary" 
+              onClick={handleSalvarAjuste} 
+              disabled={loading}
+              style={{ backgroundColor: '#2c3e50' }}
+            >
+              {loading ? 'Salvando...' : 'Salvar Ajuste'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// COMPONENTE: ModalCriarPosicao
+// ==========================================
 function ModalCriarPosicao({ onFechar, onSalvar }: { onFechar: () => void; onSalvar: () => void }) {
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
@@ -244,7 +378,7 @@ function ModalCriarPosicao({ onFechar, onSalvar }: { onFechar: () => void; onSal
               className="btn-primary" 
               onClick={handleSalvar} 
               disabled={loading}
-              style={{ backgroundColor: '#db707a' }} // Mantendo a cor da sua identidade visual
+              style={{ backgroundColor: '#db707a' }} 
             >
               {loading ? 'Salvando...' : 'Criar Posição'}
             </button>
@@ -255,7 +389,9 @@ function ModalCriarPosicao({ onFechar, onSalvar }: { onFechar: () => void; onSal
   );
 }
 
-// ---- Modal de Movimentação ----
+// ==========================================
+// COMPONENTE: ModalMovimento
+// ==========================================
 function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar: () => void }) {
   const [opcoesCalcados, setOpcoesCalcados] = useState<{ id: number, modelo: string }[]>([]);
   const [opcoesPosicoes, setOpcoesPosicoes] = useState<{ id: number, cod_localizacao: string }[]>([]);
@@ -304,17 +440,17 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
     finally { setLoading(false); }
   };
 
-async function salvar() {
-  if (!calcadoId || !posicaoEstoqueId || !quantidade || !ordemData.numero_ordem) {
-    setErro('Preencha os campos obrigatórios.');
-    return;
-  }
-  
-  setLoading(true);
-  setErro('');
+  async function salvar() {
+    if (!calcadoId || !posicaoEstoqueId || !quantidade || !ordemData.numero_ordem) {
+      setErro('Preencha os campos obrigatórios.');
+      return;
+    }
+    
+    setLoading(true);
+    setErro('');
 
-  try {
-     const payload = {
+    try {
+      const payload = {
         calcadoId: Number(calcadoId),
         posicaoEstoqueId: Number(posicaoEstoqueId),
         quantidade: Number(quantidade),
@@ -325,44 +461,31 @@ async function salvar() {
           tipo: tipo,
           valor_total: ordemData.valor_total ? Number(ordemData.valor_total).toFixed(2) : "0.00"
         }
-
       };
 
-    const resposta = await estoqueAPI.mover(payload) as MovimentacaoResposta;
+      const resposta = await estoqueAPI.mover(payload) as MovimentacaoResposta;
 
-    // Gerenciamento de Notificações
-    const emitirNotificacao = (msg: string, isAlert: boolean = false) => {
-      window.dispatchEvent(new CustomEvent('nova-notificacao', {
-        detail: {
-          id: Math.random().toString(36).substr(2, 9),
-          mensagem: msg,
-          data: new Date().toISOString(),
-          tipo: isAlert ? 'ALERTA' : 'SUCESSO'
-        }
-      }));
-    };
+      const emitirNotificacao = (msg: string, isAlert: boolean = false) => {
+        window.dispatchEvent(new CustomEvent('nova-notificacao', {
+          detail: {
+            id: Math.random().toString(36).substr(2, 9),
+            mensagem: msg,
+            data: new Date().toISOString(),
+            tipo: isAlert ? 'ALERTA' : 'SUCESSO'
+          }
+        }));
+      };
 
-    // 1. Notificação de confirmação da movimentação
-    emitirNotificacao(`Movimentacao ${resposta.movimentacao.tipo} realizada por ${resposta.movimentacao.responsavel}.`);
-
-    // 2. Verificação de Alerta de Estoque Mínimo
-    if (resposta.alertaEstoqueMin) {
-      emitirNotificacao(`Atencao: ${resposta.alertaEstoqueMin.tipo}. Minimo de ${resposta.alertaEstoqueMin.quantidade_minima} unidades.`, true);
+      emitirNotificacao(`Movimentacao ${resposta.movimentacao.tipo} realizada.`);
+      if (resposta.alertaEstoqueMin) emitirNotificacao(`Estoque baixo em ${posicaoEstoqueId}`, true);
+      
+      onSalvar();
+    } catch (err: any) {
+      setErro(err.message || 'Erro ao movimentar');
+    } finally {
+      setLoading(false);
     }
-
-    // 3. Verificação de Alerta de Estoque Máximo
-    if (resposta.alertaEstoqueMax) {
-      emitirNotificacao(`Aviso: ${resposta.alertaEstoqueMax.tipo}. Limite maximo: ${resposta.alertaEstoqueMax.quantidade_maxima}.`, true);
-    }
-
-    onSalvar();
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Erro desconhecido ao movimentar';
-    setErro(message);
-  } finally {
-    setLoading(false);
   }
-}
 
   return (
     <div className="modal" onClick={(e) => e.target === e.currentTarget && onFechar()}>

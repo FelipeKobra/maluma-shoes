@@ -231,6 +231,7 @@ export default function MovimentacoesPage() {
                       <th>Calçado</th>
                       <th>Qtd</th>
                       <th>Responsável</th>
+                      <th>Posição-Estoque</th>
                       <th>Data</th>
                     </tr>
                   </thead>
@@ -245,7 +246,8 @@ export default function MovimentacoesPage() {
                         </td>
                         <td>{m.itensMovimentacao?.calcados?.modelo || '—'}</td>
                         <td>{m.itensMovimentacao?.quantidade ?? '0'}</td>
-                        <td>{m.responsavel}</td>
+                        <td>{m.responsavel  ?? '—'}</td>
+                        <td>{m.posicaoEstoque?.cod_localizacao ?? '—'}</td>
                         <td>{m.data_hora ? new Date(m.data_hora).toLocaleDateString('pt-BR') : '—'}</td>
                       </tr>
                     ))}

@@ -30,23 +30,18 @@ type relatorioParams = {
   tipo?: string; 
 }
 
-export async function gerarRelatorioMovimentacao(
-  params: relatorioParams
-) {
-
-   const where = {
+export async function gerarRelatorioMovimentacao(params: relatorioParams) {
+  const where = {
     ...((params.dataInicio || params.dataFim) && {
       data_hora: {
         ...(params.dataInicio && {
           gte: new Date(params.dataInicio),
         }),
-
         ...(params.dataFim && {
           lte: new Date(params.dataFim),
         }),
       },
     }),
-
     ...(params.tipo && {
       tipo: params.tipo,
     }),
@@ -55,11 +50,9 @@ export async function gerarRelatorioMovimentacao(
   const [data, total] = await prisma.$transaction([
     prisma.movimentacao.findMany({
       where,
-
       orderBy: {
         data_hora: "desc",
       },
-
       include: {
         posicaoEstoque: {
           select: {
@@ -69,7 +62,6 @@ export async function gerarRelatorioMovimentacao(
         itensMovimentacao: {
           select: {
             quantidade: true,
-            calcadosId: true,
             calcados: {
               select: {
                 modelo: true,
@@ -79,46 +71,51 @@ export async function gerarRelatorioMovimentacao(
         }
       },
     }),
-
     prisma.movimentacao.count({
       where,
     }),
   ]);
 
-  if(total === 0 ) throw new ApiError("Nenhuma movimentação encontrada", 404);
+  if (total === 0) throw new ApiError("Nenhuma movimentação encontrada", 404);
 
   const dadosFormatados = data.map((mov) => {
-  
-    const item = mov.itensMovimentacao; 
+    // Tratando itensMovimentacao como Array (comportamento padrão do Prisma)
+    const primeiroItem = Array.isArray(mov.itensMovimentacao) 
+      ? mov.itensMovimentacao[0] 
+      : mov.itensMovimentacao;
 
     return {
       data_hora: mov.data_hora.toLocaleString('pt-BR'),
       tipo: mov.tipo,
-      responsavel: mov.responsavel,
-      modelo: item?.calcados?.modelo || "-",
-      quantidade: item?.quantidade || 0,
+      responsavel: mov.responsavel || "-",
+      modelo: primeiroItem?.calcados?.modelo || "-",
+      quantidade: primeiroItem?.quantidade || 0,
       cod_localizacao: mov.posicaoEstoque?.cod_localizacao || "-",
-      saldo_anterior: mov.saldo_anterior,
-      saldo_posterior: mov.saldo_posterior,
-      motivo: mov.motivo,
+      saldo_anterior: mov.saldo_anterior ?? 0,
+      saldo_posterior: mov.saldo_posterior ?? 0,
+      motivo: mov.motivo || "-",
     };
   });
 
-  const fields = [{label: 'Data-Hora', value: 'data_hora' },
-    {label: 'Tipo', value: 'tipo' },
-    {label: 'Responsavel', value: 'responsavel' }, 
-    {label: 'Modelo', value: 'modelo' }, 
-    {label: 'Quantidade', value: 'quantidade' }, 
-    {label: 'Posicao-Estoque', value: 'cod_localizacao' }, 
-    {label: 'Saldo-Anterior', value: 'saldo_anterior' },
-    {label: 'Saldo-Posterior', value: 'saldo_posterior' },
-    {label: 'Motivo', value: 'motivo' }];
+  const fields = [
+    { label: 'Data-Hora', value: 'data_hora' },
+    { label: 'Tipo', value: 'tipo' },
+    { label: 'Responsavel', value: 'responsavel' }, 
+    { label: 'Modelo', value: 'modelo' }, 
+    { label: 'Quantidade', value: 'quantidade' }, 
+    { label: 'Posicao-Estoque', value: 'cod_localizacao' }, 
+    { label: 'Saldo Anterior', value: 'saldo_anterior' },
+    { label: 'Saldo Posterior', value: 'saldo_posterior' },
+    { label: 'Motivo', value: 'motivo' }
+  ];
 
-  const opts = { fields };
+  // Delimitador ';' é essencial para o Excel em português abrir direto em colunas
+  const parser = new Parser({ fields, delimiter: ';' });
+  const csv = parser.parse(dadosFormatados);
 
-  const parser = new Parser(opts);
-
-  return parser.parse(dadosFormatados);
+  // Adicionando o BOM para garantir acentuação (Responsável, Posição, etc)
+  const BOM = '\uFEFF';
+  return BOM + csv;
 }
 
 export async function buscarHistoricoMovimentacoes(

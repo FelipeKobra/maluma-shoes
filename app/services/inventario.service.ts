@@ -48,7 +48,7 @@ export async function realizarInventario(data: InventarioInput) {
 
         responsavel: data.responsavel,
 
-        itensMovimentacaoId: data.itensMovimentacaoId,
+        itensMovimentacaoId: 0,
 
         posicaoEstoqueId: data.posicaoEstoqueId,
       },

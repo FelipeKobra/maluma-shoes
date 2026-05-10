@@ -107,65 +107,58 @@ export const baixoEstoque = await prisma.posicaoEstoque.findMany({
 });
 
 
+
 export async function gerarRelatorioAbaixoEstoque() {
+  // 1. Sua consulta (ou mock)
+  const baixoEstoqueRel = baixoEstoque; 
 
-  const baixoEstoque = await prisma.posicaoEstoque.findMany({
-    where: {
-      quantidade_atual: {
-        lt: prisma.posicaoEstoque.fields.quantidade_minimo,
-      },
-    },
-    include: {
-      movimentacoes: {
-        include: {
-          itensMovimentacao: {
-            include: {
-              calcados: true, 
-            },
-          },
-        },
-      },
-    },
+  if (baixoEstoqueRel.length === 0) {
+    throw new ApiError("Nenhum calçado abaixo do estoque mínimo", 404);
+  }
+
+  // 2. Formatação dos dados (Garantindo que a linha apareça mesmo sem movimentação)
+  const dadosFormatados = baixoEstoqueRel.map((pos) => {
+    // Busca o modelo dentro do encadeamento do Prisma
+    // Se itensMovimentacao for array, pega o primeiro, senão trata como objeto
+    const mov = pos.movimentacoes?.[0];
+    const item = mov?.itensMovimentacao;
+    const modeloCalcado = Array.isArray(item) 
+      ? item[0]?.calcados?.modelo 
+      : item?.calcados?.modelo;
+
+    return {
+      modelo: modeloCalcado || "Sem Nome",
+      localizacao: pos.cod_localizacao || "-",
+      qtd_atual: pos.quantidade_atual ?? 0,
+      qtd_minima: pos.quantidade_minimo ?? 0,
+      qtd_maxima: pos.quantidade_maximo ?? 0,
+      ultimo_abastecimento: pos.ultimo_abastecimento 
+        ? new Date(pos.ultimo_abastecimento).toLocaleDateString('pt-BR') 
+        : "N/A",
+      ultima_contagem: pos.ultima_contagem 
+        ? new Date(pos.ultima_contagem).toLocaleDateString('pt-BR') 
+        : "-",
+      mostruario: pos.para_mostruario ? "Sim" : "Nao"
+    };
   });
 
-  if(baixoEstoque.length === 0) throw new ApiError("Nenhuma calcado abaixo do estoque mínimo", 404);
+  // 3. Configuração do Parser (Nomes dos valores devem bater com as chaves acima)
+  const fields = [
+    { label: 'Modelo', value: 'modelo' },
+    { label: 'Localizacao', value: 'localizacao' },
+    { label: 'Qtd. Atual', value: 'qtd_atual' },
+    { label: 'Qtd. Minima', value: 'qtd_minima' },
+    { label: 'Qtd. Maxima', value: 'qtd_maxima' },
+    { label: 'Último Abastecimento', value: 'ultimo_abastecimento' },
+    { label: 'Última Contagem', value: 'ultima_contagem' },
+    { label: 'Mostruário', value: 'mostruario' }
+  ];
 
-  const dadosFormatados = baixoEstoque.flatMap((pos) => {
-    
-    return pos.movimentacoes.map((mov) => {
-      
-    
-      const item = mov.itensMovimentacao;
+  const parser = new Parser({ fields, delimiter: ';' }); // Delimiter ';' ajuda o Excel BR
+  const csv = parser.parse(dadosFormatados);
 
-      return {
-        modelo: item?.calcados?.modelo || "-",
-        localizacao: pos.cod_localizacao || "-",
-        qtd_atual: pos.quantidade_atual || 0,
-        qtd_minima: pos.quantidade_minimo || 0,
-        qtd_maxima: pos.quantidade_maximo || 0,
-        ultimo_abastecimento: pos.ultimo_abastecimento 
-          ? new Date(pos.ultimo_abastecimento).toLocaleDateString('pt-BR') 
-          : "N/A",
-        ultima_contagem: pos.ultima_contagem 
-          ? new Date(pos.ultima_contagem).toLocaleDateString('pt-BR') 
-          : "-",
-        mostruario: pos.para_mostruario ? "Sim" : "Não"
-      };
-    });
-  });
-
-  const fields = [{label: 'Modelo', value: 'data_hora' },
-    {label: 'Localizacao', value: 'cod_localizacao' },
-    {label: 'Qtd. Atual', value: 'quantidade_atual' }, 
-    {label: 'Qtd. Minima', value: 'quantidade_minima' }, 
-    {label: 'Qtd. Maxima', value: 'quantidade_maxima' }, 
-    {label: 'Ultimo Abastecimento', value: 'ultimo_abastecimento' }, 
-    {label: 'Ultima Contagem', value: 'ultima_contagem' },
-    {label: 'Mostruario', value: 'mostruario' }];
-
-  const opts = { fields };
-
-  const parser = new Parser(opts);
-
-  return parser.parse(dadosFormatados);
+  // 4. A MÁGICA PARA O PORTUGUÊS: Adicionar o BOM (Byte Order Mark)
+  // Isso força o Excel e outros leitores a reconhecerem acentos corretamente em UTF-8
+  const BOM = '\uFEFF';
+  return BOM + csv;
 }
