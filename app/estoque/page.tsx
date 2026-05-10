@@ -11,7 +11,7 @@ import {
   Search,
   Plus
 } from 'lucide-react';
-import type { PosicaoEstoque, TipoMovimento, MovimentoPayload } from '@/types';
+import type { PosicaoEstoque, TipoMovimento, MovimentoPayload, MovimentacaoResposta} from '@/types';
 
 export default function EstoquePage() {
   const [estoque, setEstoque] = useState<PosicaoEstoque[]>([]);
@@ -298,30 +298,62 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
     finally { setLoading(false); }
   };
 
-  async function salvar() {
-    if (!calcadoId || !posicaoEstoqueId || !quantidade || !ordemData.numero_ordem) {
-      setErro('Preencha os campos obrigatórios.');
-      return;
-    }
-    setLoading(true);
-    try {
-      const payload = {
-        calcadoId: Number(calcadoId),
-        posicaoEstoqueId: Number(posicaoEstoqueId),
-        quantidade: Number(quantidade),
-        motivo: motivo || "",
-        ordemMovimentacao: {
-          ...ordemData,
-          data_emissao: ordemData.data_emissao ? new Date(ordemData.data_emissao).toISOString() : new Date().toISOString(),
-          tipo: tipo,
-          valor_total: ordemData.valor_total ? Number(ordemData.valor_total).toFixed(2) : "0.00"
-        }
-      };
-      await estoqueAPI.mover(payload);
-      onSalvar();
-    } catch (err: any) { setErro(err.message || 'Erro na movimentação.'); }
-    finally { setLoading(false); }
+async function salvar() {
+  if (!calcadoId || !posicaoEstoqueId || !quantidade || !ordemData.numero_ordem) {
+    setErro('Preencha os campos obrigatórios.');
+    return;
   }
+  
+  setLoading(true);
+  setErro('');
+
+  try {
+    const payload: MovimentoPayload = {
+      calcadoId: Number(calcadoId),
+      posicaoEstoqueId: Number(posicaoEstoqueId),
+      quantidade: Number(quantidade),
+      motivo: motivo || "",
+      ordemMovimentacao: {
+        ...ordemData,
+        tipo: tipo
+      }
+    };
+
+    const resposta = await estoqueAPI.mover(payload) as MovimentacaoResposta;
+
+    // Gerenciamento de Notificações
+    const emitirNotificacao = (msg: string, isAlert: boolean = false) => {
+      window.dispatchEvent(new CustomEvent('nova-notificacao', {
+        detail: {
+          id: Math.random().toString(36).substr(2, 9),
+          mensagem: msg,
+          data: new Date().toISOString(),
+          tipo: isAlert ? 'ALERTA' : 'SUCESSO'
+        }
+      }));
+    };
+
+    // 1. Notificação de confirmação da movimentação
+    emitirNotificacao(`Movimentacao ${resposta.movimentacao.tipo} realizada por ${resposta.movimentacao.responsavel}.`);
+
+    // 2. Verificação de Alerta de Estoque Mínimo
+    if (resposta.alertaEstoqueMin) {
+      emitirNotificacao(`Atencao: ${resposta.alertaEstoqueMin.tipo}. Minimo de ${resposta.alertaEstoqueMin.quantidade_minima} unidades.`, true);
+    }
+
+    // 3. Verificação de Alerta de Estoque Máximo
+    if (resposta.alertaEstoqueMax) {
+      emitirNotificacao(`Aviso: ${resposta.alertaEstoqueMax.tipo}. Limite maximo: ${resposta.alertaEstoqueMax.quantidade_maxima}.`, true);
+    }
+
+    onSalvar();
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Erro desconhecido ao movimentar';
+    setErro(message);
+  } finally {
+    setLoading(false);
+  }
+}
 
   return (
     <div className="modal" onClick={(e) => e.target === e.currentTarget && onFechar()}>

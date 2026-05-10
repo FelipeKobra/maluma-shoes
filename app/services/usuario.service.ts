@@ -23,10 +23,9 @@ export async function criarUsuario(data: {
 export async function alterarUsuario(id: string, data: {
   nome: string;
   email: string;
-  senha: string;
   role: "ADMIN" | "OPERADOR";
 }) {
-  const hash = await bcrypt.hash(data.senha, 10);
+  //const hash = await bcrypt.hash(data.senha, 10);
 
   const user = await prisma.usuario.findUnique({
       where: { id: Number(id) },
@@ -39,7 +38,6 @@ export async function alterarUsuario(id: string, data: {
       data: {
         nome: data.nome,
         email: data.email,
-        senha: hash,
         role: data.role,
     },
   });

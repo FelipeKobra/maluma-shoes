@@ -32,14 +32,18 @@ export async function movimentarEstoque(data: MovimentacaoInput) {
   let saldoPosterior = saldoAnterior;
 
   if (data.tipo === "ENTRADA") {
-    if(qtdMaxima < saldoAnterior + data.quantidade) {
-      const qtdExcedida = (saldoAnterior + data.quantidade) - qtdMaxima
+    saldoPosterior += data.quantidade;
+    console.log("SALDO POSTERIOR: " + saldoPosterior);
+    console.log("QTD MAX: " + qtdMaxima);
+    if(saldoPosterior > qtdMaxima) {
+      const qtdExcedida = saldoPosterior - qtdMaxima
       alertaEstoqueMax = {
+        quantidade_atual: saldoPosterior,
         quantidade_maxima: qtdMaxima,
-        tipo: "Estoque excedido em" + qtdExcedida + " pares",
+        tipo: "Estoque excedido em " + qtdExcedida + " pares",
       }
     }
-    saldoPosterior += data.quantidade;
+    
   }
 
   if (data.tipo === "SAIDA") {
@@ -80,7 +84,7 @@ export async function movimentarEstoque(data: MovimentacaoInput) {
     },
   });
 
-  return alertaEstoqueMin ? {movimentacao, alertaEstoqueMin} : movimentacao;
+  return alertaEstoqueMin ? {movimentacao, alertaEstoqueMin} : alertaEstoqueMax ? {movimentacao, alertaEstoqueMax} : movimentacao;
 }
 
 

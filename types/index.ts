@@ -40,6 +40,24 @@ export interface Calcado {
   calcado?: { nome?: string };
 }*/
 
+export interface AlertaEstoqueMin {
+  quantidade_minima: number;
+  tipo: string;
+  ultimo_abastescimento: string;
+}
+
+export interface AlertaEstoqueMax {
+  quantidade_atual: number;
+  quantidade_maxima: number;
+  tipo: string;
+}
+
+export interface MovimentacaoResposta {
+  movimentacao: MovimentacaoResponse;
+  alertaEstoqueMin?: AlertaEstoqueMin;
+  alertaEstoqueMax?: AlertaEstoqueMax;
+}
+
 export interface CriarPosicaoPayload {
   cod_localizacao: string;
   quantidade_atual: number;

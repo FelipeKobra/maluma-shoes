@@ -7,7 +7,7 @@
 //   localStorage e window.location são chamados só no cliente
 // ============================================================
 
-import type { Calcado, CriarPosicaoPayload,  PosicaoEstoque, Movimentacao, Alerta, Usuario, MovimentoPayload, OrdemMovimentacao, MovimentacaoResponse, PaginatedResponse } from '@/types';
+import type { Calcado, CriarPosicaoPayload, MovimentacaoResposta,  PosicaoEstoque, Movimentacao, Alerta, Usuario, MovimentoPayload, OrdemMovimentacao, MovimentacaoResponse, PaginatedResponse } from '@/types';
 
 const API = 'https://maluma-shoes.vercel.app';
 
@@ -75,7 +75,7 @@ export const estoqueAPI = {
     apiFetch<PosicaoEstoque[]>('/api/posicao-estoque/minimo'),
     
   mover: (dados: MovimentoPayload) =>
-    apiFetch<MovimentacaoResponse>('/api/posicao-estoque/moverEstoque', { 
+    apiFetch<MovimentacaoResposta>('/api/posicao-estoque/moverEstoque', { 
       method: 'POST', 
       body: JSON.stringify(dados) 
     }),
