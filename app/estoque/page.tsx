@@ -308,16 +308,19 @@ async function salvar() {
   setErro('');
 
   try {
-    const payload: MovimentoPayload = {
-      calcadoId: Number(calcadoId),
-      posicaoEstoqueId: Number(posicaoEstoqueId),
-      quantidade: Number(quantidade),
-      motivo: motivo || "",
-      ordemMovimentacao: {
-        ...ordemData,
-        tipo: tipo
-      }
-    };
+     const payload = {
+        calcadoId: Number(calcadoId),
+        posicaoEstoqueId: Number(posicaoEstoqueId),
+        quantidade: Number(quantidade),
+        motivo: motivo || "",
+        ordemMovimentacao: {
+          ...ordemData,
+          data_emissao: ordemData.data_emissao ? new Date(ordemData.data_emissao).toISOString() : new Date().toISOString(),
+          tipo: tipo,
+          valor_total: ordemData.valor_total ? Number(ordemData.valor_total).toFixed(2) : "0.00"
+        }
+
+      };
 
     const resposta = await estoqueAPI.mover(payload) as MovimentacaoResposta;
 
