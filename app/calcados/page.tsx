@@ -13,7 +13,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { calcadosAPI } from '@/lib/api';
-import type { Calcado } from '@/types';
+import type { Calcado, Genero } from '@/types';
 
 export default function CalcadosPage() {
   const [calcados, setCalcados]         = useState<Calcado[]>([]);
@@ -156,10 +156,20 @@ interface ModalCalcadoProps {
 
 // Estado inicial em branco para o formulário
 const FORM_VAZIO: Partial<Calcado> = {
-  codigo_barras: '', modelo: '', marca: '', descricao: '',
-  numeracao: undefined, cor_primaria: '', cor_secundaria: '',
-  material: '', genero: 'MASCULINO', categoria: '',
-  preco_venda: undefined, peso: undefined, dimensao: '', status: 'ATIVO',
+  codigo_barras: '', 
+  modelo: '', 
+  marca: '', 
+  descricao: '',
+  numeracao: undefined, 
+  cor_primaria: '', 
+  cor_secundaria: '',
+  material: '', 
+  genero: 'Masculino' as Genero, // Ajustado de MASCULINO para Masculino
+  categoria: '',
+  preco_venda: undefined, 
+  peso: undefined, 
+  dimensao: '', 
+  status: 'ATIVO',
 };
 
 function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
@@ -185,15 +195,28 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
   async function salvar() {
     setErro('');
     setLoading(true);
+
     try {
+      // Limpeza de dados: Remove campos vazios ou undefined que podem causar erro 500
+      // e garante que números sejam números.
+      const payload = Object.fromEntries(
+        Object.entries(form).filter(([_, v]) => v !== '' && v !== undefined)
+      );
+
+      // Validação básica no front para evitar o 500 no back
+      if (!payload.modelo || !payload.marca || !payload.preco_venda) {
+        throw new Error('Modelo, Marca e Preço são obrigatórios.');
+      }
+
       if (editandoId) {
-        await calcadosAPI.atualizar(editandoId, form);
+        await calcadosAPI.atualizar(editandoId, payload as Partial<Calcado>);
       } else {
-        await calcadosAPI.criar(form);
+        await calcadosAPI.criar(payload as Partial<Calcado>);
       }
       onSalvar();
     } catch (err: unknown) {
-      setErro(err instanceof Error ? err.message : 'Erro ao salvar.');
+      // Tenta capturar a mensagem de erro detalhada do backend se houver
+      setErro(err instanceof Error ? err.message : 'Erro interno no servidor (500). Verifique os campos.');
     } finally {
       setLoading(false);
     }
