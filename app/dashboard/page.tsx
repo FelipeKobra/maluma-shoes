@@ -92,8 +92,8 @@ export default function DashboardPage() {
                     <tr key={i}>
                       <td>{m.modelo ?? '—'}</td>
                       <td>{m.marca ?? '—'}</td>
-                      <td>{m.quantidadeAtual ?? '—'}</td>
-                      <td>{m.quantidadeMinima ?? '—'}</td>
+                      <td>{m.quantidade_atual ?? '—'}</td>
+                      <td>{m.quantidade_minima ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>

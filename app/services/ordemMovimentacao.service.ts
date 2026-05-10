@@ -24,6 +24,21 @@ export async function buscarOrdemMovimentacao(id: string) {
   return item;
 }
 
+export async function buscarOrdemMovimentacaoPorNumero(numeroOrdem: string) {
+
+  console.log("NUM ORDEM: " + numeroOrdem);
+
+  const item = await prisma.ordemMovimentacao.findFirst({
+      where: { numero_ordem: numeroOrdem },
+  });
+
+  console.log("ORDEM: " + item);
+
+  return item;
+}
+
+
+
 
 export async function criarOrdemMovimentacao(body: bodyOrdMov) {
    

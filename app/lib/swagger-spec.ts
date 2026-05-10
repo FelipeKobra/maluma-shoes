@@ -17,7 +17,7 @@ const options: swaggerJsdoc.Options = {
         },
       },
     },
-    security: [{ bearerAuth: [] }], 
+    security: [{ bearerAuth: [] }],
     servers: [
       {
         url: "https://maluma-shoes.vercel.app",
@@ -137,6 +137,67 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
+      },
+      "/api/ordem-movimentacao/numero/{numero_ordem}": {
+        "get": {
+          "security": [{ "bearerAuth": [] }],
+          "summary": "Buscar ordem de movimentação pelo número",
+          "description": "Retorna uma ordem de movimentação. Requer permissão de OPERADOR ou ADMIN.",
+          "tags": ["OrdensMovimentacao"],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "numero_ordem",
+              "required": true,
+              "schema": { "type": "string" },
+              "description": "Número da ordem de movimentação"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Ordem de movimentação encontrada com sucesso",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "numero_ordem": { "type": "string" },
+                      "tipo": { "type": "string" },
+                      "status": { "type": "string" },
+                      "data_emissao": { "type": "string", "format": "date-time" },
+                      "empresa": { "type": "string" },
+                      "cnpj": { "type": "string" },
+                      "valor_total": { "type": "number", "format": "double" }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Não autenticado (Token inválido ou ausente)"
+            },
+            "403": {
+              "description": "Não autorizado (Usuário sem permissão de OPERADOR ou ADMIN)"
+            },
+            "404": {
+              "description": "Ordem de movimentação não encontrada",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": { "type": "string", "example": "Ordem de movimentação não encontrada" }
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Erro interno do servidor"
+            }
+          }
+        }
       },
       "/api/auth/login": {
         post: {
@@ -367,199 +428,199 @@ const options: swaggerJsdoc.Options = {
             },
           },
         },
-      put: {
-        summary: "Atualizar um calçado por ID",
-        tags: ["Calcados"],
-        parameters: [
-          {
-            in: "path",
-            name: "id",
-            required: true,
-            schema: {
-              type: "integer"
-            },
-            description: "ID do calçado"
-          }
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
+        put: {
+          summary: "Atualizar um calçado por ID",
+          tags: ["Calcados"],
+          parameters: [
+            {
+              in: "path",
+              name: "id",
+              required: true,
               schema: {
-                type: "object",
-                properties: {
-                  codigo_barras: { type: "string", example: "1234567890123" },
-                  modelo: { type: "string", example: "Air Max" },
-                  marca: { type: "string", example: "Nike" },
-                  descricao: { type: "string", example: "Tênis" },
-                  numeracao: { type: "integer", example: 45 },
-                  cor_primaria: { type: "string", example: "Preto" },
-                  cor_secundaria: { type: "string", example: "Branco" },
-                  material: { type: "string", example: "Couro" },
-                  genero: { 
-                    type: "string", 
-                    enum: ["Masculino", "Feminino", "Unisex"], 
-                    example: "Masculino" 
-                  },
-                  categoria: { type: "string", example: "Esportivo" },
-                  preco_venda: { type: "number", format: "float", example: 499.9 },
-                  peso: { type: "number", format: "float", example: 0.8 },
-                  dimensao: { type: "string", example: "30x20x10" },
-                  status: { 
-                    type: "string", 
-                    enum: ["ATIVO", "INATIVO"], 
-                    example: "ATIVO" 
+                type: "integer"
+              },
+              description: "ID do calçado"
+            }
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    codigo_barras: { type: "string", example: "1234567890123" },
+                    modelo: { type: "string", example: "Air Max" },
+                    marca: { type: "string", example: "Nike" },
+                    descricao: { type: "string", example: "Tênis" },
+                    numeracao: { type: "integer", example: 45 },
+                    cor_primaria: { type: "string", example: "Preto" },
+                    cor_secundaria: { type: "string", example: "Branco" },
+                    material: { type: "string", example: "Couro" },
+                    genero: {
+                      type: "string",
+                      enum: ["Masculino", "Feminino", "Unisex"],
+                      example: "Masculino"
+                    },
+                    categoria: { type: "string", example: "Esportivo" },
+                    preco_venda: { type: "number", format: "float", example: 499.9 },
+                    peso: { type: "number", format: "float", example: 0.8 },
+                    dimensao: { type: "string", example: "30x20x10" },
+                    status: {
+                      type: "string",
+                      enum: ["ATIVO", "INATIVO"],
+                      example: "ATIVO"
+                    }
                   }
                 }
               }
+            }
+          },
+          responses: {
+            200: { description: "Calçado atualizado com sucesso" },
+            400: { description: "Dados inválidos" },
+            404: { description: "Calçado não encontrado" },
+            500: { description: "Erro interno no servidor" }
+          }
+        },
+        delete: {
+          summary: "Deletar um calçado por ID",
+          tags: ["Calcados"],
+          parameters: [
+            {
+              in: "path",
+              name: "id",
+              required: true,
+              schema: {
+                type: "integer"
+              },
+              description: "ID do calçado"
+            }
+          ],
+          responses: {
+            200: {
+              description: "Calçado deletado com sucesso",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      message: {
+                        type: "string",
+                        example: "Deletado com sucesso"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            404: {
+              description: "Calçado não encontrado"
+            },
+            500: {
+              description: "Erro interno no servidor"
             }
           }
         },
-        responses: {
-          200: { description: "Calçado atualizado com sucesso" },
-          400: { description: "Dados inválidos" },
-          404: { description: "Calçado não encontrado" },
-          500: { description: "Erro interno no servidor" }
-        }
       },
-      delete: {
-        summary: "Deletar um calçado por ID",
-        tags: ["Calcados"],
-        parameters: [
-          {
-            in: "path",
-            name: "id",
-            required: true,
-            schema: {
-              type: "integer"
-            },
-            description: "ID do calçado"
-          }
-        ],
-        responses: {
-          200: {
-            description: "Calçado deletado com sucesso",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    message: {
-                      type: "string",
-                      example: "Deletado com sucesso"
-                    }
-                  }
-                }
+      "/api/calcados/withFilter": {
+        get: {
+          summary: "Listar calçados com filtros, paginação e ordenação",
+          tags: ["Calcados"],
+          parameters: [
+            { in: "query", name: "id", schema: { type: "integer" }, description: "ID do calçado" },
+            { in: "query", name: "codigo_barras", schema: { type: "string" }, description: "Código de barras" },
+            { in: "query", name: "modelo", schema: { type: "string" } },
+            { in: "query", name: "marca", schema: { type: "string" } },
+            { in: "query", name: "numeracao", schema: { type: "integer" } },
+            { in: "query", name: "cor_primaria", schema: { type: "string" } },
+            { in: "query", name: "cor_secundaria", schema: { type: "string" } },
+            { in: "query", name: "material", schema: { type: "string" } },
+            {
+              in: "query",
+              name: "genero",
+              schema: {
+                type: "string",
+                enum: ["Masculino", "Feminino", "Unisex"]
               }
+            },
+            { in: "query", name: "categoria", schema: { type: "string" } },
+            {
+              in: "query",
+              name: "status",
+              schema: {
+                type: "string",
+                enum: ["ATIVO", "INATIVO"]
+              }
+            },
+            { in: "query", name: "precoMin", schema: { type: "number", format: "float" }, description: "Preço mínimo" },
+            { in: "query", name: "precoMax", schema: { type: "number", format: "float" }, description: "Preço máximo" },
+            { in: "query", name: "page", schema: { type: "integer", default: 1 }, description: "Página atual" },
+            { in: "query", name: "limit", schema: { type: "integer", default: 10 }, description: "Quantidade por página" },
+            { in: "query", name: "sort", schema: { type: "string", example: "preco_venda" }, description: "Campo para ordenação" },
+            {
+              in: "query",
+              name: "order",
+              schema: {
+                type: "string",
+                enum: ["asc", "desc"],
+                default: "asc"
+              },
+              description: "Direção da ordenação"
             }
-          },
-          404: {
-            description: "Calçado não encontrado"
-          },
-          500: {
-            description: "Erro interno no servidor"
-          }
-        }
-      },
-    },
-    "/api/calcados/withFilter": {
-      get: {
-        summary: "Listar calçados com filtros, paginação e ordenação",
-        tags: ["Calcados"],
-        parameters: [
-          { in: "query", name: "id", schema: { type: "integer" }, description: "ID do calçado" },
-          { in: "query", name: "codigo_barras", schema: { type: "string" }, description: "Código de barras" },
-          { in: "query", name: "modelo", schema: { type: "string" } },
-          { in: "query", name: "marca", schema: { type: "string" } },
-          { in: "query", name: "numeracao", schema: { type: "integer" } },
-          { in: "query", name: "cor_primaria", schema: { type: "string" } },
-          { in: "query", name: "cor_secundaria", schema: { type: "string" } },
-          { in: "query", name: "material", schema: { type: "string" } },
-          { 
-            in: "query", 
-            name: "genero", 
-            schema: { 
-              type: "string", 
-              enum: ["Masculino", "Feminino", "Unisex"] 
-            } 
-          },
-          { in: "query", name: "categoria", schema: { type: "string" } },
-          { 
-            in: "query", 
-            name: "status", 
-            schema: { 
-              type: "string", 
-              enum: ["ATIVO", "INATIVO"] 
-            } 
-          },
-          { in: "query", name: "precoMin", schema: { type: "number", format: "float" }, description: "Preço mínimo" },
-          { in: "query", name: "precoMax", schema: { type: "number", format: "float" }, description: "Preço máximo" },
-          { in: "query", name: "page", schema: { type: "integer", default: 1 }, description: "Página atual" },
-          { in: "query", name: "limit", schema: { type: "integer", default: 10 }, description: "Quantidade por página" },
-          { in: "query", name: "sort", schema: { type: "string", example: "preco_venda" }, description: "Campo para ordenação" },
-          { 
-            in: "query", 
-            name: "order", 
-            schema: { 
-              type: "string", 
-              enum: ["asc", "desc"], 
-              default: "asc" 
-            }, 
-            description: "Direção da ordenação" 
-          }
-        ],
-        responses: {
-          200: {
-            description: "Lista de calçados filtrada com sucesso",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    data: {
-                      type: "array",
-                      items: {
+          ],
+          responses: {
+            200: {
+              description: "Lista de calçados filtrada com sucesso",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      data: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            id: { type: "integer", example: 1 },
+                            status: { type: "string", example: "ATIVO" },
+                            codigo_barras: { type: "string", example: "7891234567890" },
+                            modelo: { type: "string", example: "Air Max" },
+                            marca: { type: "string", example: "Nike" },
+                            descricao: { type: "string", example: "Tênis esportivo confortável" },
+                            numeracao: { type: "integer", example: 42 },
+                            cor_primaria: { type: "string", example: "Preto" },
+                            cor_secundaria: { type: "string", example: "Branco" },
+                            material: { type: "string", example: "Couro" },
+                            genero: { type: "string", example: "Masculino" },
+                            categoria: { type: "string", example: "Esportivo" },
+                            preco_venda: { type: "number", format: "float", example: 299.90 },
+                            peso: { type: "number", format: "float", example: 0.8 },
+                            dimensao: { type: "string", example: "30x20x10 cm" }
+                          }
+                        }
+                      },
+                      meta: {
                         type: "object",
                         properties: {
-                          id: { type: "integer", example: 1 },
-                          status: { type: "string", example: "ATIVO" },
-                          codigo_barras: { type: "string", example: "7891234567890" },
-                          modelo: { type: "string", example: "Air Max" },
-                          marca: { type: "string", example: "Nike" },
-                          descricao: { type: "string", example: "Tênis esportivo confortável" },
-                          numeracao: { type: "integer", example: 42 },
-                          cor_primaria: { type: "string", example: "Preto" },
-                          cor_secundaria: { type: "string", example: "Branco" },
-                          material: { type: "string", example: "Couro" },
-                          genero: { type: "string", example: "Masculino" },
-                          categoria: { type: "string", example: "Esportivo" },
-                          preco_venda: { type: "number", format: "float", example: 299.90 },
-                          peso: { type: "number", format: "float", example: 0.8 },
-                          dimensao: { type: "string", example: "30x20x10 cm" }
+                          total: { type: "integer", example: 100 },
+                          page: { type: { type: "integer" }, example: 1 },
+                          limit: { type: { type: "integer" }, example: 10 },
+                          totalPages: { type: { type: "integer" }, example: 10 }
                         }
-                      }
-                    },
-                    meta: {
-                      type: "object",
-                      properties: {
-                        total: { type: "integer", example: 100 },
-                        page: { type: { type: "integer" }, example: 1 },
-                        limit: { type: { type: "integer" }, example: 10 },
-                        totalPages: { type: { type: "integer" }, example: 10 }
                       }
                     }
                   }
                 }
               }
+            },
+            500: {
+              description: "Erro interno no servidor"
             }
-          },
-          500: {
-            description: "Erro interno no servidor"
           }
         }
-      }
-    },
-    "/api/calcados": {
+      },
+      "/api/calcados": {
         get: {
           summary: "Listar todos os calçados",
           tags: ["Calcados"],
@@ -618,19 +679,19 @@ const options: swaggerJsdoc.Options = {
                     cor_primaria: { type: "string", example: "Preto" },
                     cor_secundaria: { type: "string", example: "Branco" },
                     material: { type: "string", example: "Couro" },
-                    genero: { 
-                      type: "string", 
-                      enum: ["Masculino", "Feminino", "Unisex"], 
-                      example: "Masculino" 
+                    genero: {
+                      type: "string",
+                      enum: ["Masculino", "Feminino", "Unisex"],
+                      example: "Masculino"
                     },
                     categoria: { type: "string", example: "Esportivo" },
                     preco_venda: { type: "number", format: "float", example: 499.9 },
                     peso: { type: "number", format: "float", example: 0.8 },
                     dimensao: { type: "string", example: "30x20x10" },
-                    status: { 
-                      type: "string", 
-                      enum: ["ATIVO", "INATIVO"], 
-                      example: "ATIVO" 
+                    status: {
+                      type: "string",
+                      enum: ["ATIVO", "INATIVO"],
+                      example: "ATIVO"
                     }
                   }
                 }
@@ -2502,7 +2563,7 @@ const options: swaggerJsdoc.Options = {
               "description": "Erro interno do servidor"
             }
           }
-          
+
         },
       },
       "/api/usuarios/{id}": {

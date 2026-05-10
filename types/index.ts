@@ -42,13 +42,13 @@ export interface Calcado {
 
 export interface PosicaoEstoque {
   id: number;
-  localizacao?: string;
-  quantidadeAtual?: number;
-  quantidadeMinima?: number;
-  estoqueMinimoMaximo?: number;
-  ultimoAbastecimento?: string;
-  ultimaContagem?: string;
-  paraMostruario?:boolean;
+  cod_localizacao?: string;
+  quantidade_atual?: number;
+  quantidade_minima?: number;
+  quantidade_maxima?: number;
+  ultimo_abastecimento?: string;
+  ultima_contagem?: string;
+  para_mostruario?: boolean;
   modelo?: string;
   marca?: string;
 }

@@ -376,6 +376,66 @@ body {
 }
 .btn-edit:hover { background: #fef9ee; }
  
+
+/* Aumentamos a largura máxima para comportar as duas colunas */
+.modal-box.modal-largo {
+  max-width: 900px; 
+  padding: 0; /* Tiramos o padding fixo para controlar nas seções */
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 24px 36px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Duas colunas iguais */
+  gap: 0;
+}
+
+.secao-modal {
+  padding: 36px;
+}
+
+.secao-modal.direita {
+  background: rgba(0,0,0,0.02); /* Diferença sutil de fundo */
+  border-left: 1px solid var(--border);
+}
+
+.subtitulo-modal {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-pequeno {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.campo input:disabled, .campo select:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.modal-footer {
+  padding: 24px 36px;
+  border-top: 1px solid var(--border);
+}
+
+
+
 .campo { margin-bottom: 16px; }
 .campo label {
   display: block;
@@ -417,14 +477,7 @@ body {
   flex-wrap: wrap;
 }
  
-.msg-erro {
-  background: var(--danger-bg);
-  color: var(--danger);
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  margin-bottom: 12px;
-}
+
  
 .msg-sucesso {
   background: var(--success-bg);
@@ -489,6 +542,36 @@ tbody tr:last-child td { border-bottom: none; }
   z-index: 200;
   padding: 16px;
 }
+
+/* Container que segura o layout para não "pular" */
+.error-container {
+  height: 60px; /* Altura fixa para a mensagem não empurrar o grid */
+  margin: 0 36px;
+  display: flex;
+  align-items: center;
+}
+
+.msg-erro {
+  width: 96%;
+  background-color: #fff1f0;
+  border: 1px solid #ffa39e;
+  color: #e84118;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Garante que as colunas comecem juntas no topo */
+.modal-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: start; 
+  padding-top: 10px;
+}
  
 .modal-box {
   background: var(--surface);
@@ -496,7 +579,7 @@ tbody tr:last-child td { border-bottom: none; }
   padding: 36px;
   width: 100%;
   max-width: 480px;
-  max-height: 90vh;
+  max-height: 92vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
 }
