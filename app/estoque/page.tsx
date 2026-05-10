@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
-import { estoqueAPI } from '@/lib/api';
-import { 
-  Archive, 
-  AlertTriangle, 
-  CheckCircle2, 
-  AlertCircle, 
-  Search 
+import { calcadosAPI, estoqueAPI, movimentacoesAPI, alertasAPI, ordemMovimentacaoAPI } from '@/lib/api';
+
+import {
+  Archive,
+  AlertTriangle,
+  CheckCircle2,
+  AlertCircle,
+  Search
 } from 'lucide-react';
 import type { PosicaoEstoque, TipoMovimento, MovimentoPayload } from '@/types';
 
@@ -73,15 +74,15 @@ export default function EstoquePage() {
                 <tbody>
                   {estoque.map((i) => {
                     const qtdAtual = i.quantidade_atual ?? 0;
-                    const min = i.quantidade_minima ?? 0;
+                    const min = i.quantidade_minimo ?? 0;
                     const baixo = qtdAtual < min;
                     return (
                       <tr key={i.id}>
                         <td>{i.id}</td>
                         <td>{i.cod_localizacao ?? '—'}</td>
-                        <td>{qtdAtual}</td>
-                        <td>{min}</td>
-                        <td>{i.ultimo_abastecimento}</td>
+                        <td>{qtdAtual ?? '—'}</td>
+                        <td>{min ?? '—'}</td>
+                        <td>{i.ultimo_abastecimento ?? '—'}</td>
                         <td>
                           {baixo ? (
                             <span className="badge badge-alerta" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -121,8 +122,8 @@ interface ModalMovimentoProps {
 
 function ModalMovimento({ onFechar, onSalvar }: ModalMovimentoProps) {
   // Estados para as opções do backend
-  const [opcoesCalcados, setOpcoesCalcados] = useState<{id: number, modelo: string}[]>([]);
-  const [opcoesPosicoes, setOpcoesPosicoes] = useState<{id: number, cod_localizacao: string}[]>([]);
+  const [opcoesCalcados, setOpcoesCalcados] = useState<{ id: number, modelo: string }[]>([]);
+  const [opcoesPosicoes, setOpcoesPosicoes] = useState<{ id: number, cod_localizacao: string }[]>([]);
 
   // Estados da Movimentação (Esquerda)
   const [tipo, setTipo] = useState<TipoMovimento>('ENTRADA');
@@ -150,38 +151,43 @@ function ModalMovimento({ onFechar, onSalvar }: ModalMovimentoProps) {
   useEffect(() => {
     async function buscarOpcoes() {
       try {
-        const responseCalcados = await fetch('/api/calcados');
-        const dataCalcados = await responseCalcados.json();
-        setOpcoesCalcados(Array.isArray(dataCalcados) ? dataCalcados : []);
+        const dataCalcados = await calcadosAPI.listar();
+        const dataPosicoes = await estoqueAPI.listar();
 
-        const responsePosicoes = await fetch('/api/posicao-estoque');
-        const dataPosicoes = await responsePosicoes.json();
-        setOpcoesPosicoes(Array.isArray(dataPosicoes) ? dataPosicoes : []);
+        // Corrigindo o erro de 'string | undefined'
+        const calcadosFormatados = dataCalcados.map(c => ({
+          id: c.id,
+          // O '??' garante que se for undefined, vira uma string, resolvendo o erro ts(2345)
+          modelo: c.modelo ?? "Modelo não informado"
+        }));
+
+        const posicoesFormatadas = dataPosicoes.map(p => ({
+          id: p.id,
+          // O mesmo para a localização
+          cod_localizacao: p.cod_localizacao ?? "Sem local"
+        }));
+
+        setOpcoesCalcados(calcadosFormatados);
+        setOpcoesPosicoes(posicoesFormatadas);
+
       } catch (err) {
         console.error("Erro ao carregar opções:", err);
+        setErro("Erro ao carregar listas de seleção.");
       }
     }
+
     buscarOpcoes();
   }, []);
 
   // FUNÇÃO ATUALIZADA: Pesquisa real no backend
   const pesquisarOrdem = async () => {
     if (!buscaOrdem) return;
-    
+
     setErro('');
     setLoading(true);
 
     try {
-      const response = await fetch(`/api/ordem-movimentacao/numero/${buscaOrdem}`);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Ordem de movimentação não encontrada.');
-        }
-        throw new Error('Erro ao buscar ordem de movimentação.');
-      }
-
-      const data = await response.json();
+      const data = await ordemMovimentacaoAPI.buscarPorNumero(buscaOrdem);
 
       // Seta os atributos nos campos
       setOrdemData({
@@ -192,10 +198,20 @@ function ModalMovimento({ onFechar, onSalvar }: ModalMovimentoProps) {
         status: data.status || 'PROCESSADO',
         valor_total: data.valor_total || ''
       });
-      
+
       setIsCriandoOrdem(false);
     } catch (err: unknown) {
       setErro(err instanceof Error ? err.message : 'Erro ao buscar ordem de movimentação.');
+
+      setOrdemData({
+        data_emissao: '',
+        empresa: '',
+        cnpj: '',
+        numero_ordem: '',
+        status: 'PROCESSADO',
+        valor_total: ''
+      });
+
     } finally {
       setLoading(false);
     }

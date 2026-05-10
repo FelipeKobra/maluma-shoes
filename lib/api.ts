@@ -7,7 +7,7 @@
 //   localStorage e window.location são chamados só no cliente
 // ============================================================
 
-import type { Calcado, PosicaoEstoque, Movimentacao, Alerta, Usuario, MovimentoPayload } from '@/types';
+import type { Calcado, PosicaoEstoque, Movimentacao, Alerta, Usuario, MovimentoPayload, OrdemMovimentacao } from '@/types';
 
 const API = 'https://maluma-shoes.vercel.app';
 
@@ -74,8 +74,35 @@ export const estoqueAPI = {
     apiFetch<void>('/api/posicao-estoque/moverEstoque', { method: 'POST', body: JSON.stringify(dados) }),
 };
 
+// Defina uma interface para os filtros para manter o TypeScript feliz
+interface FiltrosHistorico {
+  tipo?: string;
+  responsavel?: string;
+  motivo?: string;
+  dataInicio?: string;
+  dataFim?: string;
+  page?: string | number;
+  limit?: string | number;
+}
+
 export const movimentacoesAPI = {
-  historico: () => apiFetch<Movimentacao[]>('/api/movimentacao/historico'),
+  // Agora aceita um objeto opcional de filtros
+  historico: (filtros?: FiltrosHistorico) => {
+    const params = new URLSearchParams();
+    
+    if (filtros) {
+      // Percorre o objeto e adiciona apenas o que não for undefined
+      Object.entries(filtros).forEach(([key, value]) => {
+        if (value) params.append(key, value.toString());
+      });
+    }
+
+    const query = params.toString();
+    const path = `/api/movimentacao/historico${query ? `?${query}` : ''}`;
+    
+    return apiFetch<Movimentacao[]>(path);
+  },
+  
   listar: () => apiFetch<Movimentacao[]>('/api/movimentacao'),
 };
 
@@ -103,3 +130,7 @@ export const relatoriosAPI = {
     URL.revokeObjectURL(url);
   },
 };
+
+export const ordemMovimentacaoAPI = {
+  buscarPorNumero: (numero_ordem: string) => apiFetch<OrdemMovimentacao>(`/api/ordem-movimentacao/numero/${numero_ordem}`),
+}

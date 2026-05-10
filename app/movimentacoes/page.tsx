@@ -6,6 +6,17 @@ import { History, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
 import { movimentacoesAPI } from '@/lib/api';
 import type { Movimentacao } from '@/types';
 
+// Interface para os parâmetros de busca
+export interface FiltrosHistorico {
+  tipo?: string;
+  responsavel?: string;
+  motivo?: string;
+  dataInicio?: string;
+  dataFim?: string;
+  page?: number | string;
+  limit?: number | string;
+}
+
 export default function MovimentacoesPage() {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
   const [carregando, setCarregando]       = useState(true); // Já inicia como true
@@ -15,22 +26,40 @@ export default function MovimentacoesPage() {
   const inicializado = useRef(false);
 
   const carregarMovimentacoes = useCallback(async () => {
-    // Removemos o setCarregando(true) daqui pois o estado inicial já é true
-    setErro('');
+  setErro('');
+  setCarregando(true);
+
+  // Exemplo de filtros vindos de algum estado do seu componente
+  const filtros: FiltrosHistorico = {
+    page: 1,
+    limit: 10,
+    // tipo: 'ENTRADA'
+  };
+
+  try {
+    let listaFinal: Movimentacao[] = [];
+
     try {
-      let lista: Movimentacao[];
-      try {
-        lista = await movimentacoesAPI.historico();
-      } catch {
-        lista = await movimentacoesAPI.listar();
-      }
-      setMovimentacoes(Array.isArray(lista) ? lista : []);
-    } catch (err: unknown) {
-      setErro(err instanceof Error ? err.message : 'Erro ao carregar.');
-    } finally {
-      setCarregando(false);
+      // 1. Tenta buscar o histórico paginado
+      const response = await movimentacoesAPI.historico(filtros);
+      listaFinal = response // Acessa a propriedade 'data' tipada
+      
+      // Se você tiver um estado para o total: 
+      // setTotalRegistros(response.total);
+      
+    } catch {
+      // 2. Fallback para a listagem simples caso o histórico falhe
+      const fallback = await movimentacoesAPI.listar();
+      listaFinal = fallback;
     }
-  }, []);
+
+    setMovimentacoes(listaFinal);
+  } catch (err: unknown) {
+    setErro(err instanceof Error ? err.message : 'Erro ao carregar.');
+  } finally {
+    setCarregando(false);
+  }
+}, []);
 
   useEffect(() => {
     // Verificação simples para evitar chamadas duplas em StrictMode
@@ -73,9 +102,9 @@ export default function MovimentacoesPage() {
                 </thead>
                 <tbody>
                   {movimentacoes.map((m) => {
-                    const tipo = m.tipo || m.tipoMovimentacao || '—';
+                    const tipo = m.tipo || '—';
                     const isEntrada = tipo.toUpperCase().includes('ENTRADA');
-                    const data = m.data || m.createdAt;
+                    const data = m.data_hora || '—';
                     
                     return (
                       <tr key={m.id}>
@@ -89,8 +118,8 @@ export default function MovimentacoesPage() {
                             {tipo}
                           </span>
                         </td>
-                        <td>{m.calcado?.nome || m.nomeProduto || m.nome || '—'}</td>
-                        <td>{m.quantidade ?? m.saldo ?? '—'}</td>
+                        <td>{m.itensMovimentacao?.calcados?.modelo ||  '—'}</td>
+                        <td>{m.itensMovimentacao?.quantidade ?? '—'}</td>
                         <td>{data ? new Date(data).toLocaleDateString('pt-BR') : '—'}</td>
                       </tr>
                     );

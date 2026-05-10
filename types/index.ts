@@ -44,8 +44,8 @@ export interface PosicaoEstoque {
   id: number;
   cod_localizacao?: string;
   quantidade_atual?: number;
-  quantidade_minima?: number;
-  quantidade_maxima?: number;
+  quantidade_minimo?: number;
+  quantidade_maximo?: number;
   ultimo_abastecimento?: string;
   ultima_contagem?: string;
   para_mostruario?: boolean;
@@ -56,14 +56,13 @@ export interface PosicaoEstoque {
 export interface Movimentacao {
   id: number;
   tipo?: string;
-  tipoMovimentacao?: string;
-  calcado?: { nome?: string };
-  nomeProduto?: string;
-  nome?: string;
-  quantidade?: number;
-  saldo?: number;
-  data?: string;
-  createdAt?: string;
+  responsavel?: string;
+  saldo_anterior?: number;
+  saldo_posterior?: number;
+  motivo?: string;
+  data_hora?: string;
+  itensMovimentacao?: itensMovimentacao;
+  posicaoEstoque?: PosicaoEstoque;
 }
 
 export interface Alerta {
@@ -90,4 +89,23 @@ export interface MovimentoPayload {
   quantidade: number;
   motivo?: string;
   ordemMovimentacao: { tipo: TipoMovimento };
+}
+
+export interface OrdemMovimentacao {
+  id?: number;
+  data_emissao?: string;
+  empresa?: string;
+  cnpj?: string;
+  numero_ordem?: string;
+  tipo?: string;
+  status?: string;
+  valor_total?: string;
+}
+
+export interface itensMovimentacao {
+  id?: number;
+  preco_unitario?: string;
+  quantidade?: number;
+  subtotal?: string;
+  calcados?: Calcado;
 }

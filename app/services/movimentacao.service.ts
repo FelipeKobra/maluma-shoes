@@ -161,28 +161,29 @@ export async function buscarHistoricoMovimentacoes(
     }),
   };
 
-  const [data, total] = await prisma.$transaction([
-    prisma.movimentacao.findMany({
-      where,
-
-      skip,
-
-      take: limit,
-
-      orderBy: {
-        data_hora: "desc",
+ const [data, total] = await prisma.$transaction([
+  prisma.movimentacao.findMany({
+    where,
+    skip,
+    take: limit,
+    orderBy: {
+      data_hora: "desc",
+    },
+    include: {
+      posicaoEstoque: true,
+      // Transformamos itensMovimentacao em um objeto para permitir o aninhamento
+      itensMovimentacao: {
+        include: {
+          calcados: true, // Agora o Prisma traz o calçado vinculado ao item
+        },
       },
+    },
+  }),
 
-      include: {
-        posicaoEstoque: true,
-        itensMovimentacao: true,
-      },
-    }),
-
-    prisma.movimentacao.count({
-      where,
-    }),
-  ]);
+  prisma.movimentacao.count({
+    where,
+  }),
+]);
 
   return {
     data,
