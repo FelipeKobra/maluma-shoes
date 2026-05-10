@@ -197,8 +197,7 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
     // Agora utilizamos o padrão centralizado da sua API
     await estoqueAPI.realizarInventario({
       posicaoEstoqueId: posicao.id,
-      quantidadeFisica: valorNumerico,
-      responsavel: "Sistema / Admin" // Futuramente pode vir do authContext
+      quantidadeFisica: valorNumerico
     });
 
     // Emite uma notificação de sucesso (opcional, já que você usa o evento customizado no sistema)

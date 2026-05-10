@@ -4,7 +4,6 @@ import { ApiError } from "../lib/apiError";
 type InventarioInput = {
   posicaoEstoqueId: number;
   quantidadeFisica: number;
-  itensMovimentacaoId: number;
   responsavel: string;
 };
 

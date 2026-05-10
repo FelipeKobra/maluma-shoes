@@ -94,7 +94,7 @@ export const estoqueAPI = {
     }),
 
   // ADICIONE ESTA FUNÇÃO AQUI:
-  realizarInventario: (dados: { posicaoEstoqueId: number; quantidadeFisica: number; responsavel: string }) =>
+  realizarInventario: (dados: { posicaoEstoqueId: number; quantidadeFisica: number}) =>
     apiFetch<void>('/api/inventario', {
       method: 'POST',
       body: JSON.stringify(dados)
