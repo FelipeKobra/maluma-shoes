@@ -736,41 +736,85 @@ const options: swaggerJsdoc.Options = {
         }
       },
       "/api/inventario": {
-        post: {
-          summary: "Realizar inventário de estoque (ajuste de saldo)",
-          tags: ["Inventario"],
-          requestBody: {
-            required: true,
-            content: {
+        "post": {
+          "security": [{ "bearerAuth": [] }],
+          "summary": "Realizar inventário físico de uma posição de estoque",
+          "description": "Atualiza a quantidade de um item no estoque e gera uma movimentação de ajuste baseada na divergência encontrada. Requer privilégios de ADMIN.",
+          "tags": ["Inventário"],
+          "requestBody": {
+            "required": true,
+            "content": {
               "application/json": {
-                schema: { $ref: "#/components/schemas/InventarioInput" }
+                "schema": {
+                  "type": "object",
+                  "required": ["posicaoEstoqueId", "quantidadeFisica", "responsavel"],
+                  "properties": {
+                    "posicaoEstoqueId": {
+                      "type": "integer",
+                      "description": "ID da posição de estoque a ser inventariada"
+                    },
+                    "quantidadeFisica": {
+                      "type": "number",
+                      "description": "Quantidade real contada fisicamente"
+                    },
+                    "responsavel": {
+                      "type": "string",
+                      "description": "Nome ou identificação do responsável pela contagem"
+                    }
+                  }
+                }
               }
             }
           },
-          responses: {
-            200: {
-              description: "Inventário realizado com sucesso",
-              content: {
+          "responses": {
+            "200": {
+              "description": "Inventário realizado e ajuste processado com sucesso",
+              "content": {
                 "application/json": {
-                  schema: { $ref: "#/components/schemas/InventarioResponse" }
-                }
-              }
-            },
-            400: {
-              description: "Erro de validação ou regra de negócio",
-              content: {
-                "application/json": {
-                  schema: {
-                    type: "object",
-                    properties: {
-                      error: { type: "string", example: "Posição de estoque não encontrada" }
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "movimentacao": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "data_hora": { "type": "string", "format": "date-time" },
+                          "tipo": { "type": "string", "example": "AJUSTE" },
+                          "motivo": { "type": "string" },
+                          "saldo_anterior": { "type": "number" },
+                          "saldo_posterior": { "type": "number" },
+                          "responsavel": { "type": "string" },
+                          "posicaoEstoqueId": { "type": "integer" }
+                        }
+                      },
+                      "divergencia": {
+                        "type": "number",
+                        "description": "Diferença entre o físico e o sistema"
+                      },
+                      "quantidadeSistema": {
+                        "type": "number",
+                        "description": "Quantidade que constava antes da atualização"
+                      },
+                      "quantidadeFisica": {
+                        "type": "number",
+                        "description": "Nova quantidade atualizada"
+                      }
                     }
                   }
                 }
               }
             },
-            500: {
-              description: "Erro interno no servidor"
+            "401": {
+              "description": "Token de autenticação ausente ou inválido"
+            },
+            "403": {
+              "description": "Acesso negado. Apenas administradores podem realizar esta operação"
+            },
+            "404": {
+              "description": "Posição de estoque não encontrada"
+            },
+            "500": {
+              "description": "Erro interno no servidor ou erro ao validar usuário"
             }
           }
         }

@@ -33,28 +33,7 @@ export async function realizarInventario(data: InventarioInput) {
       },
     });
 
-    const movimentacao = await tx.movimentacao.create({
-      data: {
-        data_hora: new Date(),
-
-        tipo: "AJUSTE",
-
-        motivo: `Inventário físico realizado. Divergência de ${divergencia}`,
-
-        saldo_anterior: quantidadeSistema,
-
-        saldo_posterior: data.quantidadeFisica,
-
-        responsavel: data.responsavel,
-
-        itensMovimentacaoId: 0,
-
-        posicaoEstoqueId: data.posicaoEstoqueId,
-      },
-    });
-
     return {
-      movimentacao,
       divergencia,
       quantidadeSistema,
       quantidadeFisica: data.quantidadeFisica,

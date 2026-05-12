@@ -211,9 +211,9 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
     }));
 
     onSalvar();
-  } catch (err: any) {
+  } catch (err: unknown) {
     // O apiFetch já extrai a mensagem de erro do JSON do backend
-    setErro(err.message || 'Falha ao processar inventário.');
+    setErro(err instanceof Error ? err.message : 'Erro interno no servidor (500). Verifique os campos.');
   } finally {
     setLoading(false);
   }
@@ -320,8 +320,8 @@ function ModalCriarPosicao({ onFechar, onSalvar }: { onFechar: () => void; onSal
       };
       await estoqueAPI.criar(payload);
       onSalvar();
-    } catch (err: any) {
-      setErro(err.message || 'Erro ao criar posição.');
+    } catch (err: unknown) {
+      setErro(err instanceof Error ? err.message : 'Erro interno no servidor (500). Verifique os campos.');
     } finally {
       setLoading(false);
     }
@@ -437,7 +437,7 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
         ]);
         setOpcoesCalcados(dataCalcados.map(c => ({ id: c.id, modelo: c.modelo ?? "Sem modelo" })));
         setOpcoesPosicoes(dataPosicoes.map(p => ({ id: p.id, cod_localizacao: p.cod_localizacao ?? "Sem local" })));
-      } catch (err) { setErro("Erro ao carregar listas."); }
+      } catch (err: unknown) { setErro("Erro ao carregar listas."); }
     }
     buscarOpcoes();
   }, []);
@@ -456,7 +456,7 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
         valor_total: data.valor_total || ''
       });
       setIsCriandoOrdem(false);
-    } catch (err) { setErro("Ordem não encontrada."); }
+    } catch (err: unknown) { setErro("Ordem não encontrada."); }
     finally { setLoading(false); }
   };
 
@@ -500,8 +500,8 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
       if (resposta.alertaEstoqueMin) emitirNotificacao(`Estoque baixo em ${posicaoEstoqueId}`, true);
       
       onSalvar();
-    } catch (err: any) {
-      setErro(err.message || 'Erro ao movimentar');
+    } catch (err: unknown) {
+      setErro(err instanceof Error ? err.message : 'Erro interno no servidor (500). Verifique os campos.');
     } finally {
       setLoading(false);
     }
