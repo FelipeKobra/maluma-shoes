@@ -20,12 +20,12 @@ export async function POST(req: NextRequest) {
         
     if(usuarioValidado === null) throw new ApiError("Erro ao validar usuario", 500);
 
-    const input = {
+    const dados = {
       ...body,
       usuarioValidado,
     }
 
-    const result = await realizarInventario(input);
+    const result = await realizarInventario(dados);
 
     return NextResponse.json(result);
   } catch (error) {
