@@ -1,28 +1,18 @@
 'use client';
 
-// ============================================================
-// CALCADOS/PAGE.TSX
-//
-// Equivalente a: calcados.html + calcados.js
-//
-// Conceito novo: Componentes separados dentro do arquivo
-//   ModalCalcado é um componente filho que recebe props.
-//   Isso substitui a manipulação direta do DOM (document.getElementById).
-// ============================================================
-
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { calcadosAPI } from '@/lib/api';
 import type { Calcado, Genero } from '@/types';
+import { Pencil, Trash2, Loader2, AlertCircle, PackageSearch } from 'lucide-react';
 
 export default function CalcadosPage() {
-  const [calcados, setCalcados]         = useState<Calcado[]>([]);
-  const [filtro, setFiltro]             = useState('');
-  const [carregando, setCarregando]     = useState(true);
-  const [erro, setErro]                 = useState('');
-  const [modalAberto, setModalAberto]   = useState(false);
-  // null = novo, number = editando
-  const [editandoId, setEditandoId]     = useState<number | null>(null);
+  const [calcados, setCalcados] = useState<Calcado[]>([]);
+  const [filtro, setFiltro] = useState('');
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
+  const [modalAberto, setModalAberto] = useState(false);
+  const [editandoId, setEditandoId] = useState<number | null>(null);
 
   useEffect(() => {
     carregarCalcados();
@@ -51,7 +41,6 @@ export default function CalcadosPage() {
     }
   }
 
-  // Filtragem feita no front — sem chamada extra ao backend
   const calcadosFiltrados = calcados.filter((c) => {
     const f = filtro.toLowerCase();
     return (
@@ -63,21 +52,22 @@ export default function CalcadosPage() {
   });
 
   return (
-    <div className="layout">
+    <div className="layout flex flex-col md:flex-row">
       <Sidebar />
-      <main className="main">
-        <div className="page-header">
-          <h1 className="page-title">Calçados</h1>
-          <button className="btn-primary" onClick={() => { setEditandoId(null); setModalAberto(true); }}>
+      <main className="main flex-1 p-4 md:p-8 w-full overflow-x-hidden">
+        {/* Header Responsivo */}
+        <div className="page-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <h1 className="page-title text-2xl font-bold">Calçados</h1>
+          <button className="btn-primary w-full sm:w-auto" onClick={() => { setEditandoId(null); setModalAberto(true); }}>
             + Novo Calçado
           </button>
         </div>
 
-        <div className="card">
-          <div className="filtros-row">
+        <div className="card mb-4">
+          <div className="filtros-row w-full">
             <input
               type="text"
-              className="input-busca"
+              className="input-busca w-full"
               placeholder="Buscar por nome, marca ou modelo..."
               value={filtro}
               onChange={(e) => setFiltro(e.target.value)}
@@ -85,16 +75,25 @@ export default function CalcadosPage() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card overflow-hidden">
           {carregando ? (
-            <p className="loading-text">Carregando...</p>
+            <div className="loading-text flex items-center justify-center p-8 gap-2">
+              <Loader2 className="animate-spin" size={24} />
+              <span>Carregando...</span>
+            </div>
           ) : erro ? (
-            <p className="msg-erro">{erro}</p>
+            <div className="msg-erro flex items-center gap-2 p-4 text-red-600">
+              <AlertCircle size={18} /> {erro}
+            </div>
           ) : calcadosFiltrados.length === 0 ? (
-            <p className="texto-vazio">Nenhum calçado encontrado.</p>
+            <div className="texto-vazio flex flex-col items-center gap-2 p-8 text-gray-500">
+              <PackageSearch size={40} /> 
+              <span>Nenhum calçado encontrado.</span>
+            </div>
           ) : (
-            <div className="tabela-wrapper">
-              <table>
+            /* Wrapper de tabela com scroll horizontal para mobile */
+            <div className="tabela-wrapper overflow-x-auto w-full">
+              <table className="min-w-[800px] w-full border-collapse">
                 <thead>
                   <tr>
                     <th>ID</th><th>Modelo</th><th>Marca</th><th>Numeração</th>
@@ -117,12 +116,20 @@ export default function CalcadosPage() {
                         </span>
                       </td>
                       <td>
-                        <div className="acoes">
-                          <button className="btn-edit" onClick={() => { setEditandoId(c.id); setModalAberto(true); }}>
-                            ✏️ Editar
+                        <div className="acoes flex gap-2">
+                          <button
+                            className="btn-edit flex items-center gap-1 px-2 py-1"
+                            onClick={() => { setEditandoId(c.id); setModalAberto(true); }}
+                          >
+                            <Pencil size={14} />
+                            <span className="hidden lg:inline">Editar</span>
                           </button>
-                          <button className="btn-danger" onClick={() => deletarCalcado(c.id)}>
-                            🗑️ Excluir
+                          <button
+                            className="btn-danger flex items-center gap-1 px-2 py-1"
+                            onClick={() => deletarCalcado(c.id)}
+                          >
+                            <Trash2 size={14} />
+                            <span className="hidden lg:inline">Excluir</span>
                           </button>
                         </div>
                       </td>
@@ -135,7 +142,6 @@ export default function CalcadosPage() {
         </div>
       </main>
 
-      {/* Renderização condicional do modal */}
       {modalAberto && (
         <ModalCalcado
           editandoId={editandoId}
@@ -147,37 +153,24 @@ export default function CalcadosPage() {
   );
 }
 
-// ---- Modal como componente separado ----
+// ---- Modal Refatorado para Grid Responsivo ----
 interface ModalCalcadoProps {
   editandoId: number | null;
   onFechar: () => void;
   onSalvar: () => void;
 }
 
-// Estado inicial em branco para o formulário
 const FORM_VAZIO: Partial<Calcado> = {
-  codigo_barras: '', 
-  modelo: '', 
-  marca: '', 
-  descricao: '',
-  numeracao: undefined, 
-  cor_primaria: '', 
-  cor_secundaria: '',
-  material: '', 
-  genero: 'Masculino' as Genero, // Ajustado de MASCULINO para Masculino
-  categoria: '',
-  preco_venda: undefined, 
-  peso: undefined, 
-  dimensao: '', 
-  status: 'ATIVO',
+  codigo_barras: '', modelo: '', marca: '', descricao: '', numeracao: undefined,
+  cor_primaria: '', cor_secundaria: '', material: '', genero: 'MASCULINO' as Genero,
+  categoria: '', preco_venda: undefined, peso: undefined, dimensao: '', status: 'ATIVO',
 };
 
 function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
-  const [form, setForm]     = useState<Partial<Calcado>>(FORM_VAZIO);
-  const [erro, setErro]     = useState('');
+  const [form, setForm] = useState<Partial<Calcado>>(FORM_VAZIO);
+  const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Se estiver editando, busca os dados do calçado
   useEffect(() => {
     if (editandoId) {
       calcadosAPI.buscarPorId(editandoId).then(setForm).catch(() => {
@@ -186,8 +179,6 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
     }
   }, [editandoId]);
 
-  // Função genérica para atualizar qualquer campo do form
-  // keyof Calcado garante que só campos existentes são aceitos
   function setcampo<K extends keyof Calcado>(campo: K, valor: Calcado[K]) {
     setForm((prev) => ({ ...prev, [campo]: valor }));
   }
@@ -195,19 +186,13 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
   async function salvar() {
     setErro('');
     setLoading(true);
-
     try {
-      // Limpeza de dados: Remove campos vazios ou undefined que podem causar erro 500
-      // e garante que números sejam números.
       const payload = Object.fromEntries(
         Object.entries(form).filter(([_, v]) => v !== '' && v !== undefined)
       );
-
-      // Validação básica no front para evitar o 500 no back
       if (!payload.modelo || !payload.marca || !payload.preco_venda) {
         throw new Error('Modelo, Marca e Preço são obrigatórios.');
       }
-
       if (editandoId) {
         await calcadosAPI.atualizar(editandoId, payload as Partial<Calcado>);
       } else {
@@ -215,75 +200,60 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
       }
       onSalvar();
     } catch (err: unknown) {
-      // Tenta capturar a mensagem de erro detalhada do backend se houver
-      setErro(err instanceof Error ? err.message : 'Erro interno no servidor (500). Verifique os campos.');
+      setErro(err instanceof Error ? err.message : 'Erro ao salvar.');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    // Clique no fundo escuro fecha o modal
-    <div className="modal" onClick={(e) => { if (e.target === e.currentTarget) onFechar(); }}>
-      <div className="modal-box">
-        <h2>{editandoId ? 'Editar Calçado' : 'Novo Calçado'}</h2>
-        {erro && <div className="msg-erro">{erro}</div>}
+    <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={(e) => { if (e.target === e.currentTarget) onFechar(); }}>
+      <div className="modal-box bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg p-6 shadow-xl">
+        <h2 className="text-xl font-bold mb-4">{editandoId ? 'Editar Calçado' : 'Novo Calçado'}</h2>
+        {erro && <div className="msg-erro mb-4 p-2 bg-red-100 text-red-700 rounded">{erro}</div>}
 
-        {/* Campos do formulário — value e onChange controlam o estado */}
-        <div className="campo"><label>Código de Barras</label>
-          <input type="text" value={form.codigo_barras || ''} onChange={(e) => setcampo('codigo_barras', e.target.value)} placeholder="Ex: 7891234567890" />
-        </div>
-        <div className="campo"><label>Modelo</label>
-          <input type="text" value={form.modelo || ''} onChange={(e) => setcampo('modelo', e.target.value)} placeholder="Ex: Air Max" />
-        </div>
-        <div className="campo"><label>Marca</label>
-          <input type="text" value={form.marca || ''} onChange={(e) => setcampo('marca', e.target.value)} placeholder="Ex: Nike" />
-        </div>
-        <div className="campo"><label>Descrição</label>
-          <input type="text" value={form.descricao || ''} onChange={(e) => setcampo('descricao', e.target.value)} placeholder="Ex: Tênis esportivo leve" />
-        </div>
-        <div className="campo"><label>Numeração</label>
-          <input type="number" value={form.numeracao ?? ''} onChange={(e) => setcampo('numeracao', Number(e.target.value))} placeholder="Ex: 42" />
-        </div>
-        <div className="campo"><label>Cor Primária</label>
-          <input type="text" value={form.cor_primaria || ''} onChange={(e) => setcampo('cor_primaria', e.target.value)} placeholder="Ex: Preto" />
-        </div>
-        <div className="campo"><label>Cor Secundária</label>
-          <input type="text" value={form.cor_secundaria || ''} onChange={(e) => setcampo('cor_secundaria', e.target.value)} placeholder="Ex: Branco" />
-        </div>
-        <div className="campo"><label>Material</label>
-          <input type="text" value={form.material || ''} onChange={(e) => setcampo('material', e.target.value)} placeholder="Ex: Couro" />
-        </div>
-        <div className="campo"><label>Gênero</label>
-          <select value={form.genero || 'MASCULINO'} onChange={(e) => setcampo('genero', e.target.value as Calcado['genero'])}>
-            <option value="MASCULINO">Masculino</option>
-            <option value="FEMININO">Feminino</option>
-            <option value="UNISSEX">Unissex</option>
-            <option value="INFANTIL">Infantil</option>
-          </select>
-        </div>
-        <div className="campo"><label>Categoria</label>
-          <input type="text" value={form.categoria || ''} onChange={(e) => setcampo('categoria', e.target.value)} placeholder="Ex: Esportivo" />
-        </div>
-        <div className="campo"><label>Preço de Venda (R$)</label>
-          <input type="number" step="0.01" value={form.preco_venda ?? ''} onChange={(e) => setcampo('preco_venda', Number(e.target.value))} placeholder="Ex: 299.90" />
-        </div>
-        <div className="campo"><label>Peso (kg)</label>
-          <input type="number" step="0.01" value={form.peso ?? ''} onChange={(e) => setcampo('peso', Number(e.target.value))} placeholder="Ex: 0.5" />
-        </div>
-        <div className="campo"><label>Dimensão</label>
-          <input type="text" value={form.dimensao || ''} onChange={(e) => setcampo('dimensao', e.target.value)} placeholder="Ex: 30x20x15cm" />
-        </div>
-        <div className="campo"><label>Status</label>
-          <select value={form.status || 'ATIVO'} onChange={(e) => setcampo('status', e.target.value as Calcado['status'])}>
-            <option value="ATIVO">Ativo</option>
-            <option value="INATIVO">Inativo</option>
-          </select>
+        {/* Formulário em Grid: 1 coluna no mobile, 2 colunas no desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="campo"><label className="block text-sm font-medium">Código de Barras</label>
+            <input className="w-full border rounded p-2" type="text" value={form.codigo_barras || ''} onChange={(e) => setcampo('codigo_barras', e.target.value)} />
+          </div>
+          <div className="campo"><label className="block text-sm font-medium">Modelo</label>
+            <input className="w-full border rounded p-2" type="text" value={form.modelo || ''} onChange={(e) => setcampo('modelo', e.target.value)} />
+          </div>
+          <div className="campo"><label className="block text-sm font-medium">Marca</label>
+            <input className="w-full border rounded p-2" type="text" value={form.marca || ''} onChange={(e) => setcampo('marca', e.target.value)} />
+          </div>
+          <div className="campo"><label className="block text-sm font-medium">Numeração</label>
+            <input className="w-full border rounded p-2" type="number" value={form.numeracao ?? ''} onChange={(e) => setcampo('numeracao', Number(e.target.value))} />
+          </div>
+          <div className="campo"><label className="block text-sm font-medium">Cor Primária</label>
+            <input className="w-full border rounded p-2" type="text" value={form.cor_primaria || ''} onChange={(e) => setcampo('cor_primaria', e.target.value)} />
+          </div>
+          <div className="campo"><label className="block text-sm font-medium">Gênero</label>
+            <select className="w-full border rounded p-2" value={form.genero || 'MASCULINO'} onChange={(e) => setcampo('genero', e.target.value as Calcado['genero'])}>
+              <option value="MASCULINO">Masculino</option>
+              <option value="FEMININO">Feminino</option>
+              <option value="UNISSEX">Unissex</option>
+              <option value="INFANTIL">Infantil</option>
+            </select>
+          </div>
+          <div className="campo"><label className="block text-sm font-medium">Preço de Venda (R$)</label>
+            <input className="w-full border rounded p-2" type="number" step="0.01" value={form.preco_venda ?? ''} onChange={(e) => setcampo('preco_venda', Number(e.target.value))} />
+          </div>
+          <div className="campo"><label className="block text-sm font-medium">Status</label>
+            <select className="w-full border rounded p-2" value={form.status || 'ATIVO'} onChange={(e) => setcampo('status', e.target.value as Calcado['status'])}>
+              <option value="ATIVO">Ativo</option>
+              <option value="INATIVO">Inativo</option>
+            </select>
+          </div>
+          <div className="campo md:col-span-2"><label className="block text-sm font-medium">Descrição</label>
+            <input className="w-full border rounded p-2" type="text" value={form.descricao || ''} onChange={(e) => setcampo('descricao', e.target.value)} />
+          </div>
         </div>
 
-        <div className="modal-botoes">
-          <button className="btn-secondary" onClick={onFechar}>Cancelar</button>
-          <button className="btn-primary" onClick={salvar} disabled={loading}>
+        <div className="modal-botoes flex flex-col-reverse sm:flex-row justify-end gap-3 border-t pt-4">
+          <button className="btn-secondary w-full sm:w-auto" onClick={onFechar}>Cancelar</button>
+          <button className="btn-primary w-full sm:w-auto" onClick={salvar} disabled={loading}>
             {loading ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
