@@ -4,18 +4,16 @@ import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { usuariosAPI } from '@/lib/api';
 import type { Usuario } from '@/types';
+import { Pencil, UserPlus, Loader2 } from 'lucide-react';
 
-// Definimos as roles possíveis para evitar erros de digitação
 type UserRole = 'ADMIN' | 'OPERADOR';
 
 export default function UsuariosPage() {
-  const [usuarios, setUsuarios]       = useState<Usuario[]>([]);
-  const [carregando, setCarregando]   = useState(true);
-  const [erro, setErro]               = useState('');
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
-  
-  // Atualizamos o estado de "editando" para incluir a role
-  const [editando, setEditando]       = useState<{ id: number; nome: string; email: string; role: UserRole } | null>(null);
+  const [editando, setEditando] = useState<{ id: number; nome: string; email: string; role: UserRole } | null>(null);
 
   useEffect(() => {
     carregarUsuarios();
@@ -35,24 +33,27 @@ export default function UsuariosPage() {
   }
 
   return (
-    <div className="layout">
+    <div className="layout flex flex-col md:flex-row min-h-screen">
       <Sidebar />
-      <main className="main">
-        <div className="page-header">
-          <h1 className="page-title">Usuários</h1>
-          <button className="btn-primary" onClick={() => { setEditando(null); setModalAberto(true); }}>
-            + Novo Usuário
+      <main className="main flex-1 p-4 md:p-8 w-full overflow-x-hidden">
+        <div className="page-header flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <h1 className="page-title text-2xl font-bold">Usuários</h1>
+          <button className="btn-primary w-full sm:w-auto flex items-center justify-center gap-2" onClick={() => { setEditando(null); setModalAberto(true); }}>
+            <UserPlus size={18} /> Novo Usuário
           </button>
         </div>
 
-        <div className="card">
+        <div className="card overflow-hidden">
           {carregando ? (
-            <p className="loading-text">Carregando...</p>
+            <div className="loading-text flex items-center justify-center p-12 gap-2">
+              <Loader2 className="animate-spin" size={24} />
+              <span>Carregando...</span>
+            </div>
           ) : erro ? (
-            <p className="msg-erro">{erro}</p>
+            <p className="msg-erro p-4 text-red-500">{erro}</p>
           ) : (
-            <div className="tabela-wrapper">
-              <table>
+            <div className="tabela-wrapper overflow-x-auto w-full border rounded-lg">
+              <table className="min-w-[700px] w-full">
                 <thead>
                   <tr><th>ID</th><th>Nome</th><th>Email</th><th>Role</th><th>Criado em</th><th>Ações</th></tr>
                 </thead>
@@ -67,13 +68,12 @@ export default function UsuariosPage() {
                           {u.role || '—'}
                         </span>
                       </td>
-                      <td>{u.createdAt ? new Date(u.createdAt).toLocaleDateString('pt-BR') : '—'}</td>
+                      <td className="whitespace-nowrap">{u.createdAt ? new Date(u.createdAt).toLocaleDateString('pt-BR') : '—'}</td>
                       <td>
                         <div className="acoes">
                           <button
-                            className="btn-edit"
+                            className="btn-edit flex items-center gap-1 px-3 py-1"
                             onClick={() => {
-                              // Passamos a role para o estado de edição
                               setEditando({ 
                                 id: u.id, 
                                 nome: u.nome || '', 
@@ -83,7 +83,7 @@ export default function UsuariosPage() {
                               setModalAberto(true);
                             }}
                           >
-                            ✏️ Editar
+                            <Pencil size={14} /> Editar
                           </button>
                         </div>
                       </td>
@@ -107,7 +107,7 @@ export default function UsuariosPage() {
   );
 }
 
-// ---- Modal Atualizado ----
+// ---- Modal Atualizado e Responsivo ----
 interface ModalUsuarioProps {
   editando: { id: number; nome: string; email: string; role: UserRole } | null;
   onFechar: () => void;
@@ -117,7 +117,7 @@ interface ModalUsuarioProps {
 function ModalUsuario({ editando, onFechar, onSalvar }: ModalUsuarioProps) {
   const [nome, setNome]   = useState(editando?.nome || '');
   const [email, setEmail] = useState(editando?.email || '');
-  const [role, setRole]   = useState<UserRole>(editando?.role || 'OPERADOR'); // Default: OPERADOR
+  const [role, setRole]   = useState<UserRole>(editando?.role || 'OPERADOR');
   const [senha, setSenha] = useState('');
   const [erro, setErro]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -140,44 +140,45 @@ function ModalUsuario({ editando, onFechar, onSalvar }: ModalUsuarioProps) {
   }
 
   return (
-    <div className="modal" onClick={(e) => { if (e.target === e.currentTarget) onFechar(); }}>
-      <div className="modal-box">
-        <h2>{editando ? 'Editar Usuário' : 'Novo Usuário'}</h2>
-        {erro && <div className="msg-erro">{erro}</div>}
+    <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={(e) => { if (e.target === e.currentTarget) onFechar(); }}>
+      <div className="modal-box bg-white w-full max-w-md rounded-lg p-6 shadow-xl overflow-y-auto max-h-[95vh]">
+        <h2 className="text-xl font-bold mb-4">{editando ? 'Editar Usuário' : 'Novo Usuário'}</h2>
+        {erro && <div className="msg-erro mb-4 p-2 bg-red-100 text-red-700 rounded text-sm">{erro}</div>}
         
-        <div className="campo">
-          <label>Nome</label>
-          <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo" />
-        </div>
-
-        <div className="campo">
-          <label>Email</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
-        </div>
-
-        {/* NOVO CAMPO: Role */}
-        <div className="campo">
-          <label>Perfil de Acesso (Role)</label>
-          <select 
-            value={role} 
-            onChange={(e) => setRole(e.target.value as UserRole)}
-            className="select-custom" // Certifique-se de ter esse estilo no CSS
-          >
-            <option value="OPERADOR">OPERADOR</option>
-            <option value="ADMIN">ADMIN</option>
-          </select>
-        </div>
-
-        {!editando && (
+        <div className="grid grid-cols-1 gap-4">
           <div className="campo">
-            <label>Senha</label>
-            <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="••••••••" />
+            <label className="block text-sm font-medium mb-1">Nome</label>
+            <input className="w-full border rounded p-2" type="text" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome completo" />
           </div>
-        )}
 
-        <div className="modal-botoes">
-          <button className="btn-secondary" onClick={onFechar}>Cancelar</button>
-          <button className="btn-primary" onClick={salvar} disabled={loading}>
+          <div className="campo">
+            <label className="block text-sm font-medium mb-1">Email</label>
+            <input className="w-full border rounded p-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
+          </div>
+
+          <div className="campo">
+            <label className="block text-sm font-medium mb-1">Perfil de Acesso (Role)</label>
+            <select 
+              value={role} 
+              onChange={(e) => setRole(e.target.value as UserRole)}
+              className="w-full border rounded p-2 bg-white"
+            >
+              <option value="OPERADOR">OPERADOR</option>
+              <option value="ADMIN">ADMIN</option>
+            </select>
+          </div>
+
+          {!editando && (
+            <div className="campo">
+              <label className="block text-sm font-medium mb-1">Senha</label>
+              <input className="w-full border rounded p-2" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="••••••••" />
+            </div>
+          )}
+        </div>
+
+        <div className="modal-botoes flex flex-col-reverse sm:flex-row justify-end gap-3 mt-8 pt-4 border-t">
+          <button className="btn-secondary w-full sm:w-auto px-6 py-2" onClick={onFechar}>Cancelar</button>
+          <button className="btn-primary w-full sm:w-auto px-6 py-2" onClick={salvar} disabled={loading}>
             {loading ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
