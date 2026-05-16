@@ -11,6 +11,10 @@ import type { Calcado, CriarPosicaoPayload, MovimentacaoResposta,  PosicaoEstoqu
 
 const API = 'https://maluma-shoes.vercel.app';
 
+export interface DeleteResposta {
+  message: string;
+  statuscode: number;
+}
 
 function getToken(): string | null {
   // typeof window === 'undefined' verifica se estamos no servidor (Next.js SSR)
@@ -70,8 +74,10 @@ export const calcadosAPI = {
     apiFetch<Calcado>('/api/calcados', { method: 'POST', body: JSON.stringify(dados) }),
   atualizar: (id: number, dados: Partial<Calcado>) =>
     apiFetch<Calcado>(`/api/calcados/${id}`, { method: 'PUT', body: JSON.stringify(dados) }),
+  
+  // TIPADO CORRETAMENTE: Casado com o retorno estruturado do seu backend
   deletar: (id: number) =>
-    apiFetch<void>(`/api/calcados/${id}`, { method: 'DELETE' }),
+    apiFetch<DeleteResposta>(`/api/calcados/${id}`, { method: 'DELETE' }),
 };
 
 export const estoqueAPI = {

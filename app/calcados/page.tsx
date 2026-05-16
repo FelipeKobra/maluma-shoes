@@ -34,8 +34,10 @@ export default function CalcadosPage() {
   async function deletarCalcado(id: number) {
     if (!confirm('Tem certeza que deseja excluir este calçado?')) return;
     try {
+      // Executa a deleção passando o id esperado
       await calcadosAPI.deletar(id);
-      carregarCalcados();
+      // Recarrega a listagem após a confirmação do sucesso
+      await carregarCalcados();
     } catch (err: unknown) {
       alert('Erro ao excluir: ' + (err instanceof Error ? err.message : 'Erro'));
     }
@@ -188,11 +190,13 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
     setLoading(true);
     try {
       const payload = Object.fromEntries(
-        Object.entries(form).filter(([_, v]) => v !== '' && v !== undefined)
+        Object.entries(form).filter(([_, v]) => v !== '' && v !== undefined && v !== null)
       );
+
       if (!payload.modelo || !payload.marca || !payload.preco_venda) {
         throw new Error('Modelo, Marca e Preço são obrigatórios.');
       }
+
       if (editandoId) {
         await calcadosAPI.atualizar(editandoId, payload as Partial<Calcado>);
       } else {
@@ -212,7 +216,6 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
         <h2 className="text-xl font-bold mb-4">{editandoId ? 'Editar Calçado' : 'Novo Calçado'}</h2>
         {erro && <div className="msg-erro mb-4 p-2 bg-red-100 text-red-700 rounded">{erro}</div>}
 
-        {/* Formulário em Grid: 1 coluna no mobile, 2 colunas no desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="campo"><label className="block text-sm font-medium">Código de Barras</label>
             <input className="w-full border rounded p-2" type="text" value={form.codigo_barras || ''} onChange={(e) => setcampo('codigo_barras', e.target.value)} />
@@ -224,7 +227,12 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
             <input className="w-full border rounded p-2" type="text" value={form.marca || ''} onChange={(e) => setcampo('marca', e.target.value)} />
           </div>
           <div className="campo"><label className="block text-sm font-medium">Numeração</label>
-            <input className="w-full border rounded p-2" type="number" value={form.numeracao ?? ''} onChange={(e) => setcampo('numeracao', Number(e.target.value))} />
+            <input 
+              className="w-full border rounded p-2" 
+              type="number" 
+              value={form.numeracao ?? ''} 
+              onChange={(e) => setcampo('numeracao', e.target.value === '' ? undefined : Number(e.target.value))} 
+            />
           </div>
           <div className="campo"><label className="block text-sm font-medium">Cor Primária</label>
             <input className="w-full border rounded p-2" type="text" value={form.cor_primaria || ''} onChange={(e) => setcampo('cor_primaria', e.target.value)} />
@@ -238,7 +246,13 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
             </select>
           </div>
           <div className="campo"><label className="block text-sm font-medium">Preço de Venda (R$)</label>
-            <input className="w-full border rounded p-2" type="number" step="0.01" value={form.preco_venda ?? ''} onChange={(e) => setcampo('preco_venda', Number(e.target.value))} />
+            <input 
+              className="w-full border rounded p-2" 
+              type="number" 
+              step="0.01" 
+              value={form.preco_venda ?? ''} 
+              onChange={(e) => setcampo('preco_venda', e.target.value === '' ? undefined : Number(e.target.value))} 
+            />
           </div>
           <div className="campo"><label className="block text-sm font-medium">Status</label>
             <select className="w-full border rounded p-2" value={form.status || 'ATIVO'} onChange={(e) => setcampo('status', e.target.value as Calcado['status'])}>
