@@ -17,12 +17,25 @@ export async function GET(req: Request) {
   } 
 }
 
+
 export async function POST(req: Request) {
-  try{
+  try {
     const user = await verifyToken(req) as Usuario; 
     authorize(user.role, ["ADMIN"]);
 
     const body = await req.json();
+
+    // O Prisma aceita strings numéricas para campos Decimal e faz a conversão automática
+    if (body.preco_venda !== undefined && body.preco_venda !== null) {
+      body.preco_venda = String(body.preco_venda);
+    }
+
+    // Garante que o peso seja limpo se enviado de forma inválida
+    if (body.peso === '' || body.peso === undefined) {
+      delete body.peso;
+    } else if (body.peso !== null) {
+      body.peso = Number(body.peso);
+    }
 
     const novo = await prisma.calcados.create({
       data: body,
@@ -30,6 +43,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(novo);
   } catch (error) {
-      return handleApiError(error);
-    } 
+    console.log("ERRO: " + error);
+    return handleApiError(error);
+  } 
 }
