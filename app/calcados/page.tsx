@@ -241,12 +241,13 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
     const contextoLog = editandoId ? '[Editar Calçado - Salvar]' : '[Adicionar Calçado - Salvar]';
     
     try {
+      // CORREÇÃO CRUCIAL: Remove do payload tudo o que for undefined, null OU string vazia ("")
       const payload = Object.fromEntries(
-        Object.entries(form).filter(([_, v]) => v !== undefined && v !== null)
+        Object.entries(form).filter(([_, v]) => v !== undefined && v !== null && v !== '')
       );
 
-      // LOG: Payload gerado pelo formulário
-      console.log(`${contextoLog} Gerando payload para envio:`, payload);
+      // LOG: Verifique no console do seu navegador se as chaves vazias sumiram do objeto!
+      console.log(`${contextoLog} Gerando payload limpo para envio:`, payload);
 
       if (!payload.modelo || !payload.marca || !payload.preco_venda) {
         throw new Error('Modelo, Marca e Preço são obrigatórios.');
@@ -255,7 +256,7 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
       if (editandoId) {
         console.log(`${contextoLog} Enviando requisição PUT para ID: ${editandoId}`);
         await calcadosAPI.atualizar(editandoId, payload as Partial<Calcado>);
-        console.log(`${contextoLog} Calçado ID: ${editandoId} atualizado com sucesso no backend.`);
+        console.log(`${contextoLog} Calçado ID: ${editandoId} updated com sucesso no backend.`);
       } else {
         console.log(`${contextoLog} Enviando requisição POST para criação.`);
         await calcadosAPI.criar(payload as Partial<Calcado>);
@@ -264,9 +265,7 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
       
       onSalvar();
     } catch (err: unknown) {
-      // LOG: Captura de falhas no envio (Aqui você verá os detalhes do Erro 500 se o backend rejeitar)
       console.error(`${contextoLog} Falha na operação. Detalhes técnicos do erro:`, err);
-      
       setErro(err instanceof Error ? err.message : 'Erro ao salvar.');
     } finally {
       setLoading(false);
@@ -299,6 +298,18 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
           </div>
           <div className="campo"><label className="block text-sm font-medium">Cor Primária</label>
             <input className="w-full border rounded p-2" type="text" value={form.cor_primaria || ''} onChange={(e) => setcampo('cor_primaria', e.target.value)} />
+          </div>
+          <div className="campo"><label className="block text-sm font-medium">Cor Secundária</label>
+            <input className="w-full border rounded p-2" type="text" value={form.cor_secundaria || ''} onChange={(e) => setcampo('cor_secundaria', e.target.value)} />
+          </div>
+          <div className="campo"><label className="block text-sm font-medium">Material</label>
+            <input className="w-full border rounded p-2" type="text" value={form.material || ''} onChange={(e) => setcampo('material', e.target.value)} />
+          </div>
+          <div className="campo"><label className="block text-sm font-medium">Categoria</label>
+            <input className="w-full border rounded p-2" type="text" value={form.categoria || ''} onChange={(e) => setcampo('categoria', e.target.value)} />
+          </div>
+          <div className="campo"><label className="block text-sm font-medium">Dimensão</label>
+            <input className="w-full border rounded p-2" type="text" value={form.dimensao || ''} placeholder="Ex: 30x20x10" onChange={(e) => setcampo('dimensao', e.target.value)} />
           </div>
           <div className="campo"><label className="block text-sm font-medium">Gênero</label>
             <select className="w-full border rounded p-2" value={form.genero} onChange={(e) => setcampo('genero', e.target.value as GeneroFormulario)}>
