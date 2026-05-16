@@ -177,8 +177,12 @@ export async function deletarCalcado(id: string) {
 
   await buscarCalcado(id);
 
-  await prisma.calcados.delete({
-      where: { id: Number(id) },
-    });
+  
+  await prisma.calcados.update({
+    where: { id: Number(id) },
+    data: {
+      status: 'INATIVO', 
+    },
+  });
 
 }

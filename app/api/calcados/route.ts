@@ -5,12 +5,20 @@ import { authorize } from "@/app/middleware/role";
 import { Usuario } from "@/app/generated/prisma/client";
 import { handleApiError } from "@/app/lib/handler-erros";
 
+
 export async function GET(req: Request) {
-  try{
+  try {
     const user = await verifyToken(req) as Usuario; 
     authorize(user.role, ["OPERADOR", "ADMIN"]);
 
-    const data = await prisma.calcados.findMany();
+    const data = await prisma.calcados.findMany({
+      where: {
+        status: {
+          not: 'INATIVO' 
+        }
+      }
+    });
+
     return NextResponse.json(data);
   } catch (error) {
     return handleApiError(error);
