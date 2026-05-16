@@ -39,6 +39,7 @@ export async function PUT(
 
     return NextResponse.json(atualizado);
   } catch (error) {
+    console.log("ERRO: " + error);
       return handleApiError(error);
     } 
 }
@@ -57,6 +58,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: "Deletado com sucesso", statuscode: 200 });
   } catch (error) {
+    console.log("ERRO: " + error);
     return handleApiError(error);
   } 
 }

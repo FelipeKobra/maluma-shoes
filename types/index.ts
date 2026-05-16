@@ -4,6 +4,8 @@
 // TypeScript usa isso pra te avisar se você errar um campo.
 // ============================================================
 
+import { Decimal } from "@prisma/client/runtime/client";
+
 export type Genero = 'MASCULINO' | 'FEMININO' | 'UNISSEX' | 'INFANTIL';
 export type StatusCalcado = 'ATIVO' | 'INATIVO';
 export type TipoMovimento = 'ENTRADA' | 'SAIDA';
@@ -21,7 +23,7 @@ export interface Calcado {
   material?: string;
   genero?: Genero;
   categoria?: string;
-  preco_venda?: number;
+  preco_venda?: Decimal;
   peso?: number;
   dimensao?: string;
   status?: StatusCalcado;

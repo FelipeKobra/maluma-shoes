@@ -5,6 +5,7 @@ import Sidebar from '@/components/Sidebar';
 import { calcadosAPI } from '@/lib/api';
 import type { Calcado } from '@/types';
 import { Pencil, Trash2, Loader2, AlertCircle, PackageSearch } from 'lucide-react';
+import { Decimal } from '@prisma/client/runtime/client';
 
 // Extensão estrita dos tipos aceitos pelo formulário baseado no payload do Swagger
 type GeneroFormulario = 'Masculino' | 'Feminino' | 'Unissex' | 'Infantil';
@@ -22,7 +23,7 @@ interface CalcadoFormState extends Omit<Partial<Calcado>, 'genero' | 'status'> {
   cor_secundaria?: string;
   material?: string;
   categoria?: string;
-  preco_venda?: number;
+  preco_venda?: Decimal;
   peso?: number;
   dimensao?: string;
 }
@@ -192,9 +193,9 @@ interface ModalCalcadoProps {
 }
 
 const FORM_VAZIO: CalcadoFormState = {
-  codigo_barras: '', modelo: '', marca: '', descricao: '', numeracao: undefined,
+  codigo_barras: '', modelo: '', marca: '', descricao: '', numeracao: 0,
   cor_primaria: '', cor_secundaria: '', material: '', genero: 'Masculino',
-  categoria: '', preco_venda: undefined, peso: undefined, dimensao: '', status: 'ATIVO',
+  categoria: '', preco_venda: undefined, peso: 0, dimensao: '', status: 'ATIVO',
 };
 
 function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
@@ -319,15 +320,22 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
               <option value="Infantil">Infantil</option>
             </select>
           </div>
-          <div className="campo"><label className="block text-sm font-medium">Preço de Venda (R$)</label>
-            <input 
-              className="w-full border rounded p-2" 
-              type="number" 
-              step="0.01" 
-              value={form.preco_venda ?? ''} 
-              onChange={(e) => setcampo('preco_venda', e.target.value === '' ? undefined : Number(e.target.value))} 
-            />
-          </div>
+         <div className="campo">
+          <label className="block text-sm font-medium">Preço de Venda (R$)</label>
+          <input 
+            className="w-full border rounded p-2" 
+            type="number" 
+            step="0.01" 
+            value={form.preco_venda instanceof Decimal ? form.preco_venda.toString() : (form.preco_venda ?? '')}
+            onChange={(e) => {
+              const valor = e.target.value;
+              setcampo(
+                'preco_venda', 
+                valor === '' ? undefined : new Decimal(valor) as unknown as CalcadoFormState['preco_venda']
+              );
+            }} 
+          />
+        </div>
           <div className="campo"><label className="block text-sm font-medium">Status</label>
             <select className="w-full border rounded p-2" value={form.status} onChange={(e) => setcampo('status', e.target.value as StatusFormulario)}>
               <option value="ATIVO">Ativo</option>

@@ -70,8 +70,10 @@ if (response.status === 401) {
 export const calcadosAPI = {
   listar: () => apiFetch<Calcado[]>('/api/calcados'),
   buscarPorId: (id: number) => apiFetch<Calcado>(`/api/calcados/${id}`),
-  criar: (dados: Partial<Calcado>) =>
-    apiFetch<Calcado>('/api/calcados', { method: 'POST', body: JSON.stringify(dados) }),
+  criar: (dados: Partial<Calcado>) => {
+    console.log("DADOS ENVIADOS: " + dados);
+    apiFetch<Calcado>('/api/calcados', { method: 'POST', body: JSON.stringify(dados) })
+  },
   atualizar: (id: number, dados: Partial<Calcado>) =>
     apiFetch<Calcado>(`/api/calcados/${id}`, { method: 'PUT', body: JSON.stringify(dados) }),
   
