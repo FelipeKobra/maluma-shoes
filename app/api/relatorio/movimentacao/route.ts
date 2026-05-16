@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
           motivo: searchParams.get("motivo") || undefined,
           dataInicio: searchParams.get("dataInicio") || undefined,
           dataFim: searchParams.get("dataFim") || undefined,
-          page: searchParams.get("page") || undefined,
-          limit: searchParams.get("limit") || undefined,
+          page: '1',
+          limit: '100'
     });
 
     const relCsv = await gerarRelatorioMovimentacao(result);

@@ -20,12 +20,15 @@ export default function UsuariosPage() {
   }, []);
 
   async function carregarUsuarios() {
+    console.log('[UsuariosPage] Iniciando carregamento da lista de usuários...');
     setCarregando(true);
     setErro('');
     try {
       const lista = await usuariosAPI.listar();
+      console.log('[UsuariosPage] Usuários carregados com sucesso:', lista);
       setUsuarios(Array.isArray(lista) ? lista : []);
     } catch (err: unknown) {
+      console.error('[UsuariosPage] Erro ao carregar usuários:', err);
       setErro(err instanceof Error ? err.message : 'Erro ao carregar.');
     } finally {
       setCarregando(false);
@@ -124,15 +127,32 @@ function ModalUsuario({ editando, onFechar, onSalvar }: ModalUsuarioProps) {
 
   async function salvar() {
     setErro('');
+
+    // Validação do formato de e-mail por Expressão Regular (Regex)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.warn('[ModalUsuario] Validação falhou: Formato de e-mail inválido digitado:', email);
+      setErro('Por favor, insira um endereço de e-mail válido.');
+      return;
+    }
+
+    console.log('[ModalUsuario] Iniciando processo de salvar usuário...', {
+      modo: editando ? 'EDIÇÃO' : 'CRIAÇÃO',
+      dados: { nome, email, role, id: editando?.id }
+    });
+    
     setLoading(true);
     try {
       if (editando) {
         await usuariosAPI.atualizar(editando.id, { nome, email, role });
+        console.log(`[ModalUsuario] Usuário ID ${editando.id} atualizado com sucesso.`);
       } else {
         await usuariosAPI.criar({ nome, email, senha, role });
+        console.log('[ModalUsuario] Novo usuário criado com sucesso.');
       }
       onSalvar();
     } catch (err: unknown) {
+      console.error('[ModalUsuario] Erro ao salvar dados do usuário:', err);
       setErro(err instanceof Error ? err.message : 'Erro ao salvar.');
     } finally {
       setLoading(false);
