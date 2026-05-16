@@ -8,9 +8,10 @@ import {
   Eraser,
   ChevronLeft,
   ChevronRight,
-  Loader2
+  Loader2,
+  Download
 } from 'lucide-react';
-import { movimentacoesAPI } from '@/lib/api';
+import { movimentacoesAPI, relatoriosAPI } from '@/lib/api';
 import type { Movimentacao } from '@/types';
 
 export interface FiltrosHistorico {
@@ -23,11 +24,20 @@ export interface FiltrosHistorico {
   limit: number;
 }
 
+interface RespostaPaginada {
+  data: Movimentacao[];
+  meta?: {
+    totalPages?: number | string;
+    [key: string]: unknown;
+  };
+}
+
 export default function MovimentacoesPage() {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [totalPaginas, setTotalPaginas] = useState(1);
+  const [exportando, setExportando] = useState(false);
 
   const [filtros, setFiltros] = useState<FiltrosHistorico>({
     tipo: '',
@@ -40,7 +50,13 @@ export default function MovimentacoesPage() {
 
   const inicializado = useRef(false);
 
+  // Verifica de forma segura se há algum filtro digitado ou selecionado
+  const possuiFiltrosAtivos = Boolean(
+    filtros.tipo || filtros.responsavel || filtros.motivo || filtros.dataInicio || filtros.dataFim
+  );
+
   const carregarDados = useCallback(async (filtrosParaUso: FiltrosHistorico) => {
+    console.log('[MovimentacoesPage] Iniciando carregarDados() com os filtros:', filtrosParaUso);
     setErro('');
     setCarregando(true);
 
@@ -48,16 +64,18 @@ export default function MovimentacoesPage() {
       const response = await movimentacoesAPI.historico(filtrosParaUso);
 
       if (response && typeof response === 'object' && 'data' in response) {
-        const resCast = response as any;
+        const resCast = response as RespostaPaginada;
+        console.log('[MovimentacoesPage] Dados carregados (Formato Paginado):', resCast);
         setMovimentacoes(resCast.data || []);
         setTotalPaginas(resCast.meta?.totalPages ? Number(resCast.meta.totalPages) : 1);
       } else if (Array.isArray(response)) {
-        setMovimentacoes(response);
+        console.log('[MovimentacoesPage] Dados carregados (Formato Array simples):', response);
+        setMovimentacoes(response as Movimentacao[]);
         setTotalPaginas(1);
       }
     } catch (err: unknown) {
+      console.error('[MovimentacoesPage] Erro ao carregar dados do histórico:', err);
       setErro('Erro ao conectar com o servidor.');
-      console.error(err);
     } finally {
       setCarregando(false);
     }
@@ -65,6 +83,7 @@ export default function MovimentacoesPage() {
 
   useEffect(() => {
     if (!inicializado.current) {
+      console.log('[MovimentacoesPage] Executando carga de inicialização do useEffect.');
       carregarDados(filtros);
       inicializado.current = true;
     }
@@ -72,23 +91,52 @@ export default function MovimentacoesPage() {
 
   const handleMudarPagina = (novaPagina: number) => {
     if (novaPagina < 1 || novaPagina > totalPaginas) return;
+    console.log(`[MovimentacoesPage] handleMudarPagina() acionado. Nova página: ${novaPagina}`);
     const novosFiltros = { ...filtros, page: novaPagina };
     setFiltros(novosFiltros);
     carregarDados(novosFiltros);
   };
 
   const handlePesquisar = () => {
+    console.log('[MovimentacoesPage] handlePesquisar() acionado. Resetando para página 1 com os filtros atuais:', filtros);
     const filtrosResetados = { ...filtros, page: 1 };
     setFiltros(filtrosResetados);
     carregarDados(filtrosResetados);
   };
 
   const handleLimpar = () => {
+    console.log('[MovimentacoesPage] handleLimpar() acionado. Limpando filtros para o estado padrão.');
     const defaultFiltros = {
       tipo: '', responsavel: '', dataInicio: '', dataFim: '', page: 1, limit: 10
     };
     setFiltros(defaultFiltros);
     carregarDados(defaultFiltros);
+  };
+
+  const handleExportarCsv = async () => {
+    if (!possuiFiltrosAtivos || exportando) return;
+    console.log('[MovimentacoesPage] handleExportarCsv() iniciado. Preparando payload de exportação:', {
+      tipo: filtros.tipo || undefined,
+      responsavel: filtros.responsavel || undefined,
+      motivo: filtros.motivo || undefined,
+      dataInicio: filtros.dataInicio || undefined,
+      dataFim: filtros.dataFim || undefined,
+    });
+    setExportando(true);
+    try {
+      await relatoriosAPI.baixar('movimentacao', {
+        tipo: filtros.tipo || undefined,
+        responsavel: filtros.responsavel || undefined,
+        motivo: filtros.motivo || undefined,
+        dataInicio: filtros.dataInicio || undefined,
+        dataFim: filtros.dataFim || undefined,
+      });
+      console.log('[MovimentacoesPage] Download do relatório executado com sucesso.');
+    } catch (err) {
+      console.error('[MovimentacoesPage] Erro ao exportar relatório CSV:', err);
+    } finally {
+      setExportando(false);
+    }
   };
 
   return (
@@ -176,8 +224,24 @@ export default function MovimentacoesPage() {
 
         {/* Tabela com Scroll Horizontal */}
         <div className="card overflow-hidden">
-          <div className="card-title flex items-center gap-2 font-bold mb-4">
-            <History size={20} strokeWidth={2.5} /> Histórico
+          <div className="card-title flex items-center justify-between font-bold mb-4">
+            <div className="flex items-center gap-2">
+              <History size={20} strokeWidth={2.5} /> Histórico
+            </div>
+            <button
+              className="btn-secondary p-2 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              onClick={handleExportarCsv}
+              disabled={!possuiFiltrosAtivos || exportando}
+              title={possuiFiltrosAtivos ? "Exportar CSV" : "Utilize os filtros acima para habilitar a exportação"}
+              style={{ minHeight: '38px', padding: '0 12px' }}
+            >
+              {exportando ? (
+                <Loader2 className="animate-spin" size={18} />
+              ) : (
+                <Download size={18} />
+              )}
+              <span className="text-sm font-medium hidden sm:inline">Exportar CSV</span>
+            </button>
           </div>
 
           {carregando ? (

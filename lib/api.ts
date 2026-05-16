@@ -11,6 +11,7 @@ import type { Calcado, CriarPosicaoPayload, MovimentacaoResposta,  PosicaoEstoqu
 
 const API = 'https://maluma-shoes.vercel.app';
 
+
 export interface DeleteResposta {
   message: string;
   statuscode: number;
@@ -155,9 +156,35 @@ export const usuariosAPI = {
     apiFetch<Usuario>(`/api/usuarios/${id}`, { method: 'PUT', body: JSON.stringify(dados) }),
 };
 
-export const relatoriosAPI = {
+/*export const relatoriosAPI = {
   baixar: async (tipo: string): Promise<void> => {
     const response = await apiFetch<Response>(`/api/relatorio/${tipo}`, { _csv: true });
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `relatorio-${tipo}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+};*/
+
+export const relatoriosAPI = {
+  baixar: async (tipo: string, filtros?: Record<string, string | number | undefined>): Promise<void> => {
+    const urlParams = new URLSearchParams();
+    
+    if (filtros) {
+      Object.entries(filtros).forEach(([key, value]) => {
+        if (value !== undefined && value !== '') {
+          urlParams.append(key, String(value));
+        }
+      });
+    }
+
+    const queryString = urlParams.toString();
+    const endpoint = `/api/relatorio/${tipo}${queryString ? `?${queryString}` : ''}`;
+
+    const response = await apiFetch<Response>(endpoint, { _csv: true });
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

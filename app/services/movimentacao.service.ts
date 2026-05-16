@@ -3,8 +3,6 @@ import { ApiError } from "../lib/apiError";
 import { Parser } from 'json2csv';
 import { Decimal } from "@prisma/client/runtime/client";
 
-
-
 export interface CalcadoRelatorio {
   id: number;
   modelo: string;
