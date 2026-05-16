@@ -1,6 +1,71 @@
 import { prisma } from "@/app/lib/prisma";
 import { ApiError } from "../lib/apiError";
 import { Parser } from 'json2csv';
+import { Decimal } from "@prisma/client/runtime/client";
+
+
+
+export interface CalcadoRelatorio {
+  id: number;
+  modelo: string;
+  codigo_barras?: string;
+  marca?: string;
+  descricao?: string;
+  numeracao?: number;
+  cor_primaria?: string;
+  cor_secundaria?: string;
+  material?: string;
+  genero?: string;
+  categoria?: string;
+  preco_venda?: Decimal | number;
+  peso?: number;
+  dimensao?: string;
+  status?: string;
+}
+
+export interface ItemMovimentacaoRelatorio {
+  id: number;
+  quantidade: number;
+  preco_unitario?: Decimal | number;
+  subtotal?: Decimal | number;
+  calcadosId: number;
+  ordemMovimentacaoId: number;
+  calcados: CalcadoRelatorio;
+}
+
+export interface PosicaoEstoqueRelatorio {
+  id: number;
+  cod_localizacao: string;
+  quantidade_atual: number;
+  ultima_contagem: Date | string;
+  // Substituído o 'any' por uma assinatura de índice estrita para os demais campos opcionais do Prisma
+  [key: string]: string | number | boolean | Date | Decimal | null | undefined;
+}
+
+export interface MovimentacaoDB {
+  id: number;
+  data_hora: Date | string;
+  tipo: 'ENTRADA' | 'SAIDA' | string;
+  responsavel?: string | null;
+  saldo_anterior?: number | null;
+  saldo_posterior?: number | null;
+  motivo?: string | null;
+  posicaoEstoque: PosicaoEstoqueRelatorio | null;
+  itensMovimentacao: ItemMovimentacaoRelatorio[] | ItemMovimentacaoRelatorio;
+}
+
+export interface MetaRelatorio {
+  total?: number;
+  pagina_atual?: number;
+  total_paginas?: number;
+  [key: string]: unknown; // Uso de 'unknown' em vez de 'any' para propriedades dinâmicas desconhecidas
+}
+
+// Interface principal para o parâmetro da função
+export interface EntradaRelatorioMovimentacao {
+  data: MovimentacaoDB[];
+  meta?: MetaRelatorio;
+}
 
 type BuscarHistoricoParams = {
   tipo?: string;
@@ -30,62 +95,15 @@ type relatorioParams = {
   tipo?: string; 
 }
 
-export async function gerarRelatorioMovimentacao(params: relatorioParams) {
-  const where = {
-    ...((params.dataInicio || params.dataFim) && {
-      data_hora: {
-        ...(params.dataInicio && {
-          gte: new Date(params.dataInicio),
-        }),
-        ...(params.dataFim && {
-          lte: new Date(params.dataFim),
-        }),
-      },
-    }),
-    ...(params.tipo && {
-      tipo: params.tipo,
-    }),
-  };
-
-  const [data, total] = await prisma.$transaction([
-    prisma.movimentacao.findMany({
-      where,
-      orderBy: {
-        data_hora: "desc",
-      },
-      include: {
-        posicaoEstoque: {
-          select: {
-            cod_localizacao: true,
-          }
-        },
-        itensMovimentacao: {
-          select: {
-            quantidade: true,
-            calcados: {
-              select: {
-                modelo: true,
-              }
-            }
-          }
-        }
-      },
-    }),
-    prisma.movimentacao.count({
-      where,
-    }),
-  ]);
-
-  if (total === 0) throw new ApiError("Nenhuma movimentação encontrada", 404);
-
-  const dadosFormatados = data.map((mov) => {
-    // Tratando itensMovimentacao como Array (comportamento padrão do Prisma)
+export async function gerarRelatorioMovimentacao(dadosMovimentacao: EntradaRelatorioMovimentacao): Promise<string> {
+  
+  const dadosFormatados = dadosMovimentacao.data.map((mov) => {
     const primeiroItem = Array.isArray(mov.itensMovimentacao) 
       ? mov.itensMovimentacao[0] 
       : mov.itensMovimentacao;
 
     return {
-      data_hora: mov.data_hora.toLocaleString('pt-BR'),
+      data_hora: new Date(mov.data_hora).toLocaleString('pt-BR'),
       tipo: mov.tipo,
       responsavel: mov.responsavel || "-",
       modelo: primeiroItem?.calcados?.modelo || "-",
@@ -109,11 +127,9 @@ export async function gerarRelatorioMovimentacao(params: relatorioParams) {
     { label: 'Motivo', value: 'motivo' }
   ];
 
-  // Delimitador ';' é essencial para o Excel em português abrir direto em colunas
   const parser = new Parser({ fields, delimiter: ';' });
   const csv = parser.parse(dadosFormatados);
 
-  // Adicionando o BOM para garantir acentuação (Responsável, Posição, etc)
   const BOM = '\uFEFF';
   return BOM + csv;
 }
@@ -181,6 +197,8 @@ export async function buscarHistoricoMovimentacoes(
     where,
   }),
 ]);
+
+if (total === 0) throw new ApiError("Nenhuma movimentação encontrada", 404);
 
   return {
     data,

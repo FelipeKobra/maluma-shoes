@@ -29,15 +29,17 @@ export default function EstoquePage() {
   }, []);
 
   async function carregarTudo() {
+    console.log('[EstoquePage] Iniciando carregamento de dados do estoque...');
     setCarregando(true);
     try {
       const [listaEstoque] = await Promise.all([
         estoqueAPI.listar(),
         estoqueAPI.minimo(),
       ]);
+      console.log('[EstoquePage] Dados carregados com sucesso:', listaEstoque);
       setEstoque(Array.isArray(listaEstoque) ? listaEstoque : []);
     } catch (err) {
-      console.error(err);
+      console.error('[EstoquePage] Erro ao carregar dados do estoque:', err);
     } finally {
       setCarregando(false);
     }
@@ -183,41 +185,45 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
   const [erro, setErro] = useState('');
 
   async function handleSalvarAjuste() {
-  const valorNumerico = Number(qtdFisica);
+    const valorNumerico = Number(qtdFisica);
 
-  if (isNaN(valorNumerico) || valorNumerico < 0) {
-    setErro('A quantidade física deve ser um número maior ou igual a zero.');
-    return;
+    if (isNaN(valorNumerico) || valorNumerico < 0) {
+      setErro('A quantidade física deve ser um número maior ou igual a zero.');
+      return;
+    }
+
+    console.log('[ModalInventario] Iniciando salvamento de ajuste...', { posicaoEstoqueId: posicao.id, quantidadeFisica: valorNumerico });
+    setLoading(true);
+    setErro('');
+
+    try {
+      // Agora utilizamos o padrão centralizado da sua API
+      await estoqueAPI.realizarInventario({
+        posicaoEstoqueId: posicao.id,
+        quantidadeFisica: valorNumerico
+      });
+
+      console.log('[ModalInventario] Ajuste de inventário realizado com sucesso.');
+
+      // Emite uma notificação de sucesso (opcional, já que você usa o evento customizado no sistema)
+      window.dispatchEvent(new CustomEvent('nova-notificacao', {
+        detail: {
+          id: Math.random().toString(36).substr(2, 9),
+          mensagem: `Inventário realizado na posição ${posicao.cod_localizacao}`,
+          data: new Date().toISOString(),
+          tipo: 'SUCESSO'
+        }
+      }));
+
+      onSalvar();
+    } catch (err: unknown) {
+      console.error('[ModalInventario] Erro ao realizar ajuste de inventário:', err);
+      // O apiFetch já extrai a mensagem de erro do JSON do backend
+      setErro(err instanceof Error ? err.message : 'Erro interno no servidor (500). Verifique os campos.');
+    } finally {
+      setLoading(false);
+    }
   }
-
-  setLoading(true);
-  setErro('');
-
-  try {
-    // Agora utilizamos o padrão centralizado da sua API
-    await estoqueAPI.realizarInventario({
-      posicaoEstoqueId: posicao.id,
-      quantidadeFisica: valorNumerico
-    });
-
-    // Emite uma notificação de sucesso (opcional, já que você usa o evento customizado no sistema)
-    window.dispatchEvent(new CustomEvent('nova-notificacao', {
-      detail: {
-        id: Math.random().toString(36).substr(2, 9),
-        mensagem: `Inventário realizado na posição ${posicao.cod_localizacao}`,
-        data: new Date().toISOString(),
-        tipo: 'SUCESSO'
-      }
-    }));
-
-    onSalvar();
-  } catch (err: unknown) {
-    // O apiFetch já extrai a mensagem de erro do JSON do backend
-    setErro(err instanceof Error ? err.message : 'Erro interno no servidor (500). Verifique os campos.');
-  } finally {
-    setLoading(false);
-  }
-}
 
   return (
     <div className="modal" onClick={(e) => e.target === e.currentTarget && onFechar()}>
@@ -308,19 +314,24 @@ function ModalCriarPosicao({ onFechar, onSalvar }: { onFechar: () => void; onSal
       setErro('O código de localização é obrigatório.');
       return;
     }
+    
+    const payload = {
+      cod_localizacao: formData.cod_localizacao,
+      quantidade_atual: Number(formData.quantidade_atual) || 0,
+      quantidade_minimo: Number(formData.quantidade_minimo) || 0,
+      quantidade_maximo: Number(formData.quantidade_maximo) || 0,
+      para_mostruario: formData.para_mostruario,
+      ultima_contagem: new Date().toISOString()
+    };
+
+    console.log('[ModalCriarPosicao] Iniciando criação de nova posição...', payload);
     setLoading(true);
     try {
-      const payload = {
-        cod_localizacao: formData.cod_localizacao,
-        quantidade_atual: Number(formData.quantidade_atual) || 0,
-        quantidade_minimo: Number(formData.quantidade_minimo) || 0,
-        quantidade_maximo: Number(formData.quantidade_maximo) || 0,
-        para_mostruario: formData.para_mostruario,
-        ultima_contagem: new Date().toISOString()
-      };
       await estoqueAPI.criar(payload);
+      console.log('[ModalCriarPosicao] Nova posição de estoque criada com sucesso.');
       onSalvar();
     } catch (err: unknown) {
+      console.error('[ModalCriarPosicao] Erro ao criar nova posição:', err);
       setErro(err instanceof Error ? err.message : 'Erro interno no servidor (500). Verifique os campos.');
     } finally {
       setLoading(false);
@@ -430,23 +441,30 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
 
   useEffect(() => {
     async function buscarOpcoes() {
+      console.log('[ModalMovimento] Carregando opções de calçados e posições para o formulário...');
       try {
         const [dataCalcados, dataPosicoes] = await Promise.all([
           calcadosAPI.listar(),
           estoqueAPI.listar()
         ]);
+        console.log('[ModalMovimento] Opções carregadas do banco com sucesso.');
         setOpcoesCalcados(dataCalcados.map(c => ({ id: c.id, modelo: c.modelo ?? "Sem modelo" })));
         setOpcoesPosicoes(dataPosicoes.map(p => ({ id: p.id, cod_localizacao: p.cod_localizacao ?? "Sem local" })));
-      } catch (err: unknown) { setErro("Erro ao carregar listas."); }
+      } catch (err: unknown) { 
+        console.error('[ModalMovimento] Erro ao buscar opções do formulário:', err);
+        setErro("Erro ao carregar listas."); 
+      }
     }
     buscarOpcoes();
   }, []);
 
   const pesquisarOrdem = async () => {
     if (!buscaOrdem) return;
+    console.log(`[ModalMovimento] Buscando ordem de movimentação pelo número: ${buscaOrdem}`);
     setLoading(true);
     try {
       const data = await ordemMovimentacaoAPI.buscarPorNumero(buscaOrdem);
+      console.log('[ModalMovimento] Ordem encontrada:', data);
       setOrdemData({
         data_emissao: data.data_emissao ? data.data_emissao.slice(0, 16) : '',
         empresa: data.empresa || '',
@@ -456,7 +474,10 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
         valor_total: data.valor_total || ''
       });
       setIsCriandoOrdem(false);
-    } catch (err: unknown) { setErro("Ordem não encontrada."); }
+    } catch (err: unknown) { 
+      console.error(`[ModalMovimento] Ordem com número ${buscaOrdem} não foi encontrada:`, err);
+      setErro("Ordem não encontrada."); 
+    }
     finally { setLoading(false); }
   };
 
@@ -469,21 +490,24 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
     setLoading(true);
     setErro('');
 
-    try {
-      const payload = {
-        calcadoId: Number(calcadoId),
-        posicaoEstoqueId: Number(posicaoEstoqueId),
-        quantidade: Number(quantidade),
-        motivo: motivo || "",
-        ordemMovimentacao: {
-          ...ordemData,
-          data_emissao: ordemData.data_emissao ? new Date(ordemData.data_emissao).toISOString() : new Date().toISOString(),
-          tipo: tipo,
-          valor_total: ordemData.valor_total ? Number(ordemData.valor_total).toFixed(2) : "0.00"
-        }
-      };
+    const payload = {
+      calcadoId: Number(calcadoId),
+      posicaoEstoqueId: Number(posicaoEstoqueId),
+      quantidade: Number(quantidade),
+      motivo: motivo || "",
+      ordemMovimentacao: {
+        ...ordemData,
+        data_emissao: ordemData.data_emissao ? new Date(ordemData.data_emissao).toISOString() : new Date().toISOString(),
+        tipo: tipo,
+        valor_total: ordemData.valor_total ? Number(ordemData.valor_total).toFixed(2) : "0.00"
+      }
+    };
 
+    console.log('[ModalMovimento] Iniciando salvamento da movimentação...', payload);
+
+    try {
       const resposta = await estoqueAPI.mover(payload) as MovimentacaoResposta;
+      console.log('[ModalMovimento] Resposta da movimentação recebida:', resposta);
 
       const emitirNotificacao = (msg: string, isAlert: boolean = false) => {
         window.dispatchEvent(new CustomEvent('nova-notificacao', {
@@ -497,10 +521,14 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
       };
 
       emitirNotificacao(`Movimentacao ${resposta.movimentacao.tipo} realizada.`);
-      if (resposta.alertaEstoqueMin) emitirNotificacao(`Estoque baixo em ${posicaoEstoqueId}`, true);
+      if (resposta.alertaEstoqueMin) {
+        console.warn(`[ModalMovimento] Alerta disparado: Estoque baixo na posição ID ${posicaoEstoqueId}`);
+        emitirNotificacao(`Estoque baixo em ${posicaoEstoqueId}`, true);
+      }
       
       onSalvar();
     } catch (err: unknown) {
+      console.error('[ModalMovimento] Erro ao realizar movimentação no estoque:', err);
       setErro(err instanceof Error ? err.message : 'Erro interno no servidor (500). Verifique os campos.');
     } finally {
       setLoading(false);

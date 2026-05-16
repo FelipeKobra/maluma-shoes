@@ -2691,46 +2691,98 @@ const options: swaggerJsdoc.Options = {
       },
       "/api/relatorio/movimentacao": {
         "get": {
+          "security": [{ "bearerAuth": [] }],
           "summary": "Gerar relatório de movimentações em CSV",
+          "description": "Filtra o histórico de movimentações do estoque e retorna um arquivo de texto formatado em CSV para download. Requer privilégios de ADMIN.",
           "tags": ["Relatórios"],
           "parameters": [
             {
+              "name": "tipo",
+              "in": "query",
+              "required": false,
+              "description": "Filtra pelo tipo de movimentação (ex: ENTRADA, SAIDA)",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "responsavel",
+              "in": "query",
+              "required": false,
+              "description": "Filtra pelo nome ou ID do usuário responsável",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "motivo",
+              "in": "query",
+              "required": false,
+              "description": "Busca palavras-chave no motivo informado",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
               "name": "dataInicio",
               "in": "query",
-              "description": "Data inicial para filtragem",
               "required": false,
+              "description": "Data inicial do período no formato ISO 8601 (ex: 2026-01-01T00:00:00.000Z)",
               "schema": {
                 "type": "string",
-                "format": "date",
-                "example": "2026-01-01T00:00:00Z"
+                "format": "date-time"
               }
             },
             {
               "name": "dataFim",
               "in": "query",
-              "description": "Data final para filtragem",
               "required": false,
+              "description": "Data final do período no formato ISO 8601 (ex: 2026-05-15T23:59:59.000Z)",
               "schema": {
                 "type": "string",
-                "format": "date",
-                "example": "2026-12-31T00:00:00Z"
+                "format": "date-time"
               }
             },
             {
-              "name": "tipo",
+              "name": "page",
               "in": "query",
-              "description": "Tipo de movimentação (Entrada/Saída/Ajuste)",
               "required": false,
+              "description": "Número da página para paginação interna",
               "schema": {
-                "type": "string",
-                "enum": ["ENTRADA", "SAIDA", "AJUSTE"],
-                "example": "ENTRADA"
+                "type": "integer",
+                "default": 1
+              }
+            },
+            {
+              "name": "limit",
+              "in": "query",
+              "required": false,
+              "description": "Quantidade de registros por página interna",
+              "schema": {
+                "type": "integer",
+                "default": 10
               }
             }
           ],
           "responses": {
             "200": {
-              "description": "Arquivo CSV gerado com sucesso",
+              "description": "Arquivo CSV gerado com sucesso.",
+              "headers": {
+                "Content-Type": {
+                  "description": "Tipo de conteúdo binário de texto em CSV",
+                  "schema": {
+                    "type": "string",
+                    "example": "text/csv; charset=utf-8"
+                  }
+                },
+                "Content-Disposition": {
+                  "description": "Força o navegador a baixar o arquivo com o nome definido",
+                  "schema": {
+                    "type": "string",
+                    "example": "attachment; filename=relatorio_movimentacoes.csv"
+                  }
+                }
+              },
               "content": {
                 "text/csv": {
                   "schema": {
@@ -2740,11 +2792,44 @@ const options: swaggerJsdoc.Options = {
                 }
               }
             },
-            "500": {
-              "description": "Erro interno servidor"
+            "401": {
+              "description": "Não autenticado. Token ausente ou inválido.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": { "type": "string", "example": "Não autorizado: Token inválido." }
+                    }
+                  }
+                }
+              }
             },
-            "404": {
-              "description": "Nenhuma movimentação encontrada"
+            "403": {
+              "description": "Acesso proibido. Usuário autenticado não possui a role ADMIN.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": { "type": "string", "example": "Acesso negado: Permissão insuficiente." }
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Erro interno no processamento ou banco de dados.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": { "type": "string", "example": "Erro interno no servidor." }
+                    }
+                  }
+                }
+              }
             }
           }
         }
