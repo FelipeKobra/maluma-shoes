@@ -181,6 +181,7 @@ export default function EstoquePage() {
 // ==========================================
 function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEstoque, onFechar: () => void, onSalvar: () => void }) {
   const [qtdFisica, setQtdFisica] = useState<string>(posicao.quantidade_atual?.toString() || '0');
+  const [motivo, setMotivo] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
 
@@ -192,15 +193,16 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
       return;
     }
 
-    console.log('[ModalInventario] Iniciando salvamento de ajuste...', { posicaoEstoqueId: posicao.id, quantidadeFisica: valorNumerico });
+    console.log('[ModalInventario] Iniciando salvamento de ajuste...', { posicaoEstoqueId: posicao.id, quantidadeFisica: valorNumerico, motivo });
     setLoading(true);
     setErro('');
 
     try {
-      // Agora utilizamos o padrão centralizado da sua API
+      // Agora o payload envia também o motivo digitado
       await estoqueAPI.realizarInventario({
         posicaoEstoqueId: posicao.id,
-        quantidadeFisica: valorNumerico
+        quantidadeFisica: valorNumerico,
+        motivo: motivo || undefined
       });
 
       console.log('[ModalInventario] Ajuste de inventário realizado com sucesso.');
@@ -262,7 +264,7 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
 
           <div className="subtitulo-modal">Ajuste de Saldo</div>
 
-          <div className="campo">
+          <div className="campo" style={{ marginBottom: '16px' }}>
             <label>Quantidade Física (Contada em mãos) *</label>
             <input 
               type="number" 
@@ -271,6 +273,16 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
               onChange={(e) => setQtdFisica(e.target.value)}
               placeholder="Ex: 15"
               autoFocus
+            />
+          </div>
+
+          <div className="campo">
+            <label>Motivo do Ajuste</label>
+            <input 
+              type="text" 
+              value={motivo} 
+              onChange={(e) => setMotivo(e.target.value)}
+              placeholder="Ex: Quebra de lote, erro de entrada no sistema"
             />
             <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px', lineHeight: '1.4' }}>
               * Ao salvar, o saldo será atualizado para o valor informado e uma movimentação de <strong>AJUSTE</strong> será registrada no histórico.

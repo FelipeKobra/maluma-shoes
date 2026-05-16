@@ -5,6 +5,7 @@ type InventarioInput = {
   posicaoEstoqueId: number;
   quantidadeFisica: number;
   responsavel: string;
+  motivo?: string;
 };
 
 export async function realizarInventario(data: InventarioInput) {
@@ -20,7 +21,6 @@ export async function realizarInventario(data: InventarioInput) {
     }
 
     const quantidadeSistema = estoque.quantidade_atual;
-
     const divergencia = data.quantidadeFisica - quantidadeSistema;
 
     await tx.posicaoEstoque.update({
@@ -33,10 +33,25 @@ export async function realizarInventario(data: InventarioInput) {
       },
     });
 
+     const movimentacao = await tx.movimentacao.create({
+      data: {
+        data_hora: new Date(),
+        tipo: "AJUSTE",
+        motivo: data.motivo + `. Divergência de ${divergencia}`,
+        saldo_anterior: quantidadeSistema,
+        saldo_posterior: data.quantidadeFisica,
+        responsavel: data.responsavel,
+        itensMovimentacaoId: 0,
+        posicaoEstoqueId: data.posicaoEstoqueId,
+      },
+    });
+
+    // O data.motivo agora chega com segurança dentro desta transação se precisar vincular ao histórico
     return {
       divergencia,
       quantidadeSistema,
       quantidadeFisica: data.quantidadeFisica,
+      motivo: data.motivo || ""
     };
   });
 }
