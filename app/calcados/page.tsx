@@ -3,8 +3,29 @@
 import { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { calcadosAPI } from '@/lib/api';
-import type { Calcado, Genero } from '@/types';
+import type { Calcado } from '@/types';
 import { Pencil, Trash2, Loader2, AlertCircle, PackageSearch } from 'lucide-react';
+
+// Extensão estrita dos tipos aceitos pelo formulário baseado no payload do Swagger
+type GeneroFormulario = 'Masculino' | 'Feminino' | 'Unissex' | 'Infantil';
+type StatusFormulario = 'ATIVO' | 'INATIVO';
+
+interface CalcadoFormState extends Omit<Partial<Calcado>, 'genero' | 'status'> {
+  genero: GeneroFormulario;
+  status: StatusFormulario;
+  codigo_barras?: string;
+  modelo?: string;
+  marca?: string;
+  descricao?: string;
+  numeracao?: number;
+  cor_primaria?: string;
+  cor_secundaria?: string;
+  material?: string;
+  categoria?: string;
+  preco_venda?: number;
+  peso?: number;
+  dimensao?: string;
+}
 
 export default function CalcadosPage() {
   const [calcados, setCalcados] = useState<Calcado[]>([]);
@@ -34,9 +55,7 @@ export default function CalcadosPage() {
   async function deletarCalcado(id: number) {
     if (!confirm('Tem certeza que deseja excluir este calçado?')) return;
     try {
-      // Executa a deleção passando o id esperado
       await calcadosAPI.deletar(id);
-      // Recarrega a listagem após a confirmação do sucesso
       await carregarCalcados();
     } catch (err: unknown) {
       alert('Erro ao excluir: ' + (err instanceof Error ? err.message : 'Erro'));
@@ -93,7 +112,6 @@ export default function CalcadosPage() {
               <span>Nenhum calçado encontrado.</span>
             </div>
           ) : (
-            /* Wrapper de tabela com scroll horizontal para mobile */
             <div className="tabela-wrapper overflow-x-auto w-full">
               <table className="min-w-[800px] w-full border-collapse">
                 <thead>
@@ -155,33 +173,45 @@ export default function CalcadosPage() {
   );
 }
 
-// ---- Modal Refatorado para Grid Responsivo ----
+// ---- Modal com Tipagem Estrita ----
 interface ModalCalcadoProps {
   editandoId: number | null;
   onFechar: () => void;
   onSalvar: () => void;
 }
 
-const FORM_VAZIO: Partial<Calcado> = {
+const FORM_VAZIO: CalcadoFormState = {
   codigo_barras: '', modelo: '', marca: '', descricao: '', numeracao: undefined,
-  cor_primaria: '', cor_secundaria: '', material: '', genero: 'MASCULINO' as Genero,
+  cor_primaria: '', cor_secundaria: '', material: '', genero: 'Masculino',
   categoria: '', preco_venda: undefined, peso: undefined, dimensao: '', status: 'ATIVO',
 };
 
 function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
-  const [form, setForm] = useState<Partial<Calcado>>(FORM_VAZIO);
+  const [form, setForm] = useState<CalcadoFormState>(FORM_VAZIO);
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (editandoId) {
-      calcadosAPI.buscarPorId(editandoId).then(setForm).catch(() => {
+      calcadosAPI.buscarPorId(editandoId).then((dados) => {
+        let generoFormatado: GeneroFormulario = 'Masculino';
+        if (dados.genero) {
+          const gen = dados.genero.toLowerCase();
+          generoFormatado = (gen.charAt(0).toUpperCase() + gen.slice(1)) as GeneroFormulario;
+        }
+
+        setForm({
+          ...dados,
+          genero: generoFormatado,
+          status: (dados.status as StatusFormulario) || 'ATIVO',
+        });
+      }).catch(() => {
         setErro('Erro ao carregar dados.');
       });
     }
   }, [editandoId]);
 
-  function setcampo<K extends keyof Calcado>(campo: K, valor: Calcado[K]) {
+  function setcampo<K extends keyof CalcadoFormState>(campo: K, valor: CalcadoFormState[K]) {
     setForm((prev) => ({ ...prev, [campo]: valor }));
   }
 
@@ -190,13 +220,14 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
     setLoading(true);
     try {
       const payload = Object.fromEntries(
-        Object.entries(form).filter(([_, v]) => v !== '' && v !== undefined && v !== null)
+        Object.entries(form).filter(([_, v]) => v !== undefined && v !== null)
       );
 
       if (!payload.modelo || !payload.marca || !payload.preco_venda) {
         throw new Error('Modelo, Marca e Preço são obrigatórios.');
       }
 
+      // O payload mapeado agora satisfaz perfeitamente as regras de contrato do banco
       if (editandoId) {
         await calcadosAPI.atualizar(editandoId, payload as Partial<Calcado>);
       } else {
@@ -238,11 +269,11 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
             <input className="w-full border rounded p-2" type="text" value={form.cor_primaria || ''} onChange={(e) => setcampo('cor_primaria', e.target.value)} />
           </div>
           <div className="campo"><label className="block text-sm font-medium">Gênero</label>
-            <select className="w-full border rounded p-2" value={form.genero || 'MASCULINO'} onChange={(e) => setcampo('genero', e.target.value as Calcado['genero'])}>
-              <option value="MASCULINO">Masculino</option>
-              <option value="FEMININO">Feminino</option>
-              <option value="UNISSEX">Unissex</option>
-              <option value="INFANTIL">Infantil</option>
+            <select className="w-full border rounded p-2" value={form.genero} onChange={(e) => setcampo('genero', e.target.value as GeneroFormulario)}>
+              <option value="Masculino">Masculino</option>
+              <option value="Feminino">Feminino</option>
+              <option value="Unissex">Unissex</option>
+              <option value="Infantil">Infantil</option>
             </select>
           </div>
           <div className="campo"><label className="block text-sm font-medium">Preço de Venda (R$)</label>
@@ -255,7 +286,7 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
             />
           </div>
           <div className="campo"><label className="block text-sm font-medium">Status</label>
-            <select className="w-full border rounded p-2" value={form.status || 'ATIVO'} onChange={(e) => setcampo('status', e.target.value as Calcado['status'])}>
+            <select className="w-full border rounded p-2" value={form.status} onChange={(e) => setcampo('status', e.target.value as StatusFormulario)}>
               <option value="ATIVO">Ativo</option>
               <option value="INATIVO">Inativo</option>
             </select>
