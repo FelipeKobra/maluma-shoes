@@ -11,13 +11,7 @@ export async function GET(req: Request) {
     const user = await verifyToken(req) as Usuario; 
     authorize(user.role, ["OPERADOR", "ADMIN"]);
 
-    const data = await prisma.calcados.findMany({
-      where: {
-        status: {
-          not: 'INATIVO' 
-        }
-      }
-    });
+    const data = await prisma.calcados.findMany();
 
     return NextResponse.json(data);
   } catch (error) {

@@ -8,9 +8,9 @@ import {
   Archive,
   CheckCircle2,
   AlertCircle,
-  Search,
   Plus,
-  ClipboardCheck
+  ClipboardCheck,
+  Trash2
 } from 'lucide-react';
 import type { PosicaoEstoque, TipoMovimento, MovimentoPayload, MovimentacaoResposta } from '@/types';
 
@@ -177,7 +177,7 @@ export default function EstoquePage() {
 }
 
 // ==========================================
-// COMPONENTE: ModalInventario (CORRIGIDO)
+// COMPONENTE: ModalInventario
 // ==========================================
 function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEstoque, onFechar: () => void, onSalvar: () => void }) {
   const [qtdFisica, setQtdFisica] = useState<string>(posicao.quantidade_atual?.toString() || '0');
@@ -198,7 +198,6 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
     setErro('');
 
     try {
-      // Agora o payload envia também o motivo digitado
       await estoqueAPI.realizarInventario({
         posicaoEstoqueId: posicao.id,
         quantidadeFisica: valorNumerico,
@@ -207,7 +206,6 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
 
       console.log('[ModalInventario] Ajuste de inventário realizado com sucesso.');
 
-      // Emite uma notificação de sucesso (opcional, já que você usa o evento customizado no sistema)
       window.dispatchEvent(new CustomEvent('nova-notificacao', {
         detail: {
           id: Math.random().toString(36).substr(2, 9),
@@ -220,7 +218,6 @@ function ModalInventario({ posicao, onFechar, onSalvar }: { posicao: PosicaoEsto
       onSalvar();
     } catch (err: unknown) {
       console.error('[ModalInventario] Erro ao realizar ajuste de inventário:', err);
-      // O apiFetch já extrai a mensagem de erro do JSON do backend
       setErro(err instanceof Error ? err.message : 'Erro interno no servidor (500). Verifique os campos.');
     } finally {
       setLoading(false);
@@ -435,19 +432,40 @@ function ModalCriarPosicao({ onFechar, onSalvar }: { onFechar: () => void; onSal
 // ==========================================
 // COMPONENTE: ModalMovimento
 // ==========================================
+interface ItemIncluso {
+  idInterno: string;
+  calcadoId: number;
+  calcadoModelo: string;
+  posicaoEstoqueId: number;
+  posicaoCodigo: string;
+  quantidade: number;
+}
+
+interface OrdemMovimentacaoObjeto {
+  data_emissao: string;
+  empresa: string;
+  cnpj: string;
+  numero_ordem: string;
+  status: string;
+  valor_total: string;
+  tipo: TipoMovimento;
+}
+
 function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar: () => void }) {
   const [opcoesCalcados, setOpcoesCalcados] = useState<{ id: number, modelo: string }[]>([]);
   const [opcoesPosicoes, setOpcoesPosicoes] = useState<{ id: number, cod_localizacao: string }[]>([]);
+  
   const [tipo, setTipo] = useState<TipoMovimento>('ENTRADA');
-  const [calcadoId, setCalcadoId] = useState('');
-  const [posicaoEstoqueId, setPosicaoId] = useState('');
-  const [quantidade, setQuantidade] = useState('');
-  const [motivo, setMotivo] = useState('');
-  const [isCriandoOrdem, setIsCriandoOrdem] = useState(false);
-  const [buscaOrdem, setBuscaOrdem] = useState('');
   const [ordemData, setOrdemData] = useState({
     data_emissao: '', empresa: '', cnpj: '', numero_ordem: '', status: 'PROCESSADO', valor_total: ''
   });
+
+  const [calcadoId, setCalcadoId] = useState('');
+  const [posicaoEstoqueId, setPosId] = useState('');
+  const [quantidade, setQuantidade] = useState('');
+
+  const [itensInclusos, setItensInclusos] = useState<ItemIncluso[]>([]);
+
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -470,78 +488,109 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
     buscarOpcoes();
   }, []);
 
-  const pesquisarOrdem = async () => {
-    if (!buscaOrdem) return;
-    console.log(`[ModalMovimento] Buscando ordem de movimentação pelo número: ${buscaOrdem}`);
-    setLoading(true);
-    try {
-      const data = await ordemMovimentacaoAPI.buscarPorNumero(buscaOrdem);
-      console.log('[ModalMovimento] Ordem encontrada:', data);
-      setOrdemData({
-        data_emissao: data.data_emissao ? data.data_emissao.slice(0, 16) : '',
-        empresa: data.empresa || '',
-        cnpj: data.cnpj || '',
-        numero_ordem: data.numero_ordem || '',
-        status: data.status || 'PROCESSADO',
-        valor_total: data.valor_total || ''
-      });
-      setIsCriandoOrdem(false);
-    } catch (err: unknown) { 
-      console.error(`[ModalMovimento] Ordem com número ${buscaOrdem} não foi encontrada:`, err);
-      setErro("Ordem não encontrada."); 
+  const adicionarItemLista = () => {
+    if (!calcadoId || !posicaoEstoqueId || !quantidade) {
+      setErro('Preencha todos os campos do item antes de adicionar.');
+      return;
     }
-    finally { setLoading(false); }
+
+    const qtdNum = Number(quantidade);
+    if (isNaN(qtdNum) || qtdNum <= 0) {
+      setErro('A quantidade deve ser um número maior do que zero.');
+      return;
+    }
+
+    const calcadoObj = opcoesCalcados.find(c => c.id === Number(calcadoId));
+    const posicaoObj = opcoesPosicoes.find(p => p.id === Number(posicaoEstoqueId));
+
+    const novoItem: ItemIncluso = {
+      idInterno: Math.random().toString(36).substring(2, 9),
+      calcadoId: Number(calcadoId),
+      calcadoModelo: calcadoObj?.modelo || 'Desconhecido',
+      posicaoEstoqueId: Number(posicaoEstoqueId),
+      posicaoCodigo: posicaoObj?.cod_localizacao || 'Desconhecido',
+      quantidade: qtdNum
+    };
+
+    console.log('[ModalMovimento] Adicionando item à lista temporária:', novoItem);
+    setItensInclusos([...itensInclusos, novoItem]);
+    setCalcadoId('');
+    setPosId('');
+    setQuantidade('');
+    setErro('');
+  };
+
+  const removerItemLista = (idInterno: string) => {
+    console.log(`[ModalMovimento] Removendo item da lista temporária. ID: ${idInterno}`);
+    setItensInclusos(itensInclusos.filter(item => item.idInterno !== idInterno));
   };
 
   async function salvar() {
-    if (!calcadoId || !posicaoEstoqueId || !quantidade || !ordemData.numero_ordem) {
-      setErro('Preencha os campos obrigatórios.');
+    if (itensInclusos.length === 0) {
+      setErro('Adicione pelo menos um item à lista para movimentar.');
+      return;
+    }
+
+    if (!ordemData.numero_ordem) {
+      setErro('Preencha o número da Ordem de Movimentação.');
       return;
     }
     
     setLoading(true);
     setErro('');
 
-    const payload = {
-      calcadoId: Number(calcadoId),
-      posicaoEstoqueId: Number(posicaoEstoqueId),
-      quantidade: Number(quantidade),
-      motivo: motivo || "",
-      ordemMovimentacao: {
-        ...ordemData,
-        data_emissao: ordemData.data_emissao ? new Date(ordemData.data_emissao).toISOString() : new Date().toISOString(),
-        tipo: tipo,
-        valor_total: ordemData.valor_total ? Number(ordemData.valor_total).toFixed(2) : "0.00"
-      }
-    };
-
-    console.log('[ModalMovimento] Iniciando salvamento da movimentação...', payload);
+    console.log(`[ModalMovimento] Iniciando o envio sequencial de ${itensInclusos.length} itens para o backend...`);
 
     try {
-      const resposta = await estoqueAPI.mover(payload) as MovimentacaoResposta;
-      console.log('[ModalMovimento] Resposta da movimentação recebida:', resposta);
+      for (let i = 0; i < itensInclusos.length; i++) {
+        const item = itensInclusos[i];
+        
+        const ordemMovimentacaoMapeada: OrdemMovimentacaoObjeto = {
+          data_emissao: ordemData.data_emissao ? new Date(ordemData.data_emissao).toISOString() : new Date().toISOString(),
+          empresa: ordemData.empresa,
+          cnpj: ordemData.cnpj,
+          numero_ordem: ordemData.numero_ordem,
+          status: ordemData.status,
+          valor_total: ordemData.valor_total ? Number(ordemData.valor_total).toFixed(2) : "0.00",
+          tipo: tipo
+        };
 
-      const emitirNotificacao = (msg: string, isAlert: boolean = false) => {
-        window.dispatchEvent(new CustomEvent('nova-notificacao', {
-          detail: {
-            id: Math.random().toString(36).substr(2, 9),
-            mensagem: msg,
-            data: new Date().toISOString(),
-            tipo: isAlert ? 'ALERTA' : 'SUCESSO'
-          }
-        }));
-      };
+        const payload: MovimentoPayload = {
+          calcadoId: item.calcadoId,
+          posicaoEstoqueId: item.posicaoEstoqueId,
+          quantidade: item.quantidade,
+          motivo: "",
+          ordemMovimentacao: ordemMovimentacaoMapeada as unknown as { tipo: TipoMovimento }
+        };
 
-      emitirNotificacao(`Movimentacao ${resposta.movimentacao.tipo} realizada.`);
-      if (resposta.alertaEstoqueMin) {
-        console.warn(`[ModalMovimento] Alerta disparado: Estoque baixo na posição ID ${posicaoEstoqueId}`);
-        emitirNotificacao(`Estoque baixo em ${posicaoEstoqueId}`, true);
+        console.log(`[ModalMovimento] Enviando item [${i + 1}/${itensInclusos.length}]`, payload);
+        const resposta = await estoqueAPI.mover(payload) as MovimentacaoResposta;
+        console.log(`[ModalMovimento] Resposta recebida para o item [${i + 1}/${itensInclusos.length}]:`, resposta);
+
+        const emitirNotificacao = (msg: string, isAlert: boolean = false) => {
+          window.dispatchEvent(new CustomEvent('nova-notificacao', {
+            detail: {
+              id: Math.random().toString(36).substr(2, 9),
+              mensagem: msg,
+              data: new Date().toISOString(),
+              tipo: isAlert ? 'ALERTA' : 'SUCESSO'
+            }
+          }));
+        };
+
+        emitirNotificacao(`Movimentação de ${resposta.movimentacao.tipo} do item ${item.calcadoModelo} realizada.`);
+        
+        if (resposta.alertaEstoqueMin) {
+          console.warn(`[ModalMovimento] Alerta disparado: Estoque baixo na posição ID ${item.posicaoEstoqueId}`);
+          emitirNotificacao(`Estoque baixo em ${item.posicaoCodigo}`, true);
+        }
       }
-      
+
+      console.log('[ModalMovimento] Todos os itens foram movimentados com sucesso!');
       onSalvar();
     } catch (err: unknown) {
-      console.error('[ModalMovimento] Erro ao realizar movimentação no estoque:', err);
-      setErro(err instanceof Error ? err.message : 'Erro interno no servidor (500). Verifique os campos.');
+      console.error('[ModalMovimento] Erro durante o lote de requisições de movimentação:', err);
+      setErro(err instanceof Error ? err.message : 'Erro interno ao processar um dos itens. Verifique os campos.');
     } finally {
       setLoading(false);
     }
@@ -549,59 +598,116 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
 
   return (
     <div className="modal" onClick={(e) => e.target === e.currentTarget && onFechar()}>
-      <div className="modal-box modal-largo">
-        <div className="modal-header"><h2>Movimentar Estoque</h2></div>
-        {erro && <div className="msg-erro" style={{ margin: '10px' }}>{erro}</div>}
-        <div className="modal-content">
-          <div className="secao-modal">
-            <div className="subtitulo-modal">Dados do Item</div>
-            <div className="campo">
-              <label>Tipo *</label>
-              <select value={tipo} onChange={(e) => setTipo(e.target.value as TipoMovimento)}>
+      {/* Modal expandido proporcionalmente para 960px com espaçamentos internos ampliados */}
+      <div className="modal-box modal-largo" style={{ width: '960px', padding: '28px', display: 'flex', flexDirection: 'column' }}>
+        <div className="modal-header" style={{ marginBottom: '20px' }}><h2 style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.5px' }}>MOVIMENTAR ESTOQUE</h2></div>
+        {erro && <div className="msg-erro" style={{ margin: '0 0 16px 0', padding: '12px', fontSize: '14px' }}>{erro}</div>}
+        
+        <div className="modal-content" style={{ display: 'grid', gridTemplateColumns: '1fr 1.25fr', gap: '32px', minHeight: 0 }}>
+          
+          {/* COLUNA DA ESQUERDA: Dados estruturais da Ordem */}
+          <div className="secao-modal" style={{ borderRight: '1px solid rgba(0,0,0,0.08)', paddingRight: '32px' }}>
+            <div className="subtitulo-modal" style={{ marginBottom: '16px', fontSize: '15px', fontWeight: 'bold', color: '#db707a' }}>DADOS DA ORDEM</div>
+            
+            <div className="campo" style={{ marginBottom: '14px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Tipo de Movimentação *</label>
+              <select style={{ padding: '8px', fontSize: '14px' }} value={tipo} onChange={(e) => setTipo(e.target.value as TipoMovimento)}>
                 <option value="ENTRADA">Entrada</option>
                 <option value="SAIDA">Saída</option>
               </select>
             </div>
-            <div className="campo">
-              <label>Calçado *</label>
-              <select value={calcadoId} onChange={(e) => setCalcadoId(e.target.value)}>
-                <option value="">Selecione</option>
-                {opcoesCalcados.map(c => <option key={c.id} value={c.id}>{c.modelo}</option>)}
-              </select>
+            
+            <div className="campo" style={{ marginBottom: '14px' }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Número da Ordem *</label><input style={{ padding: '8px', fontSize: '14px' }} value={ordemData.numero_ordem} onChange={(e) => setOrdemData({...ordemData, numero_ordem: e.target.value})}  /></div>
+            <div className="campo" style={{ marginBottom: '14px' }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Empresa / Fornecedor</label><input style={{ padding: '8px', fontSize: '14px' }} value={ordemData.empresa} onChange={(e) => setOrdemData({...ordemData, empresa: e.target.value})} placeholder="Razão Social" /></div>
+            <div className="campo" style={{ marginBottom: '14px' }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>CNPJ</label><input style={{ padding: '8px', fontSize: '14px' }} value={ordemData.cnpj} onChange={(e) => setOrdemData({...ordemData, cnpj: e.target.value})} placeholder="00.000.000/0001-00" /></div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+              <div className="campo" style={{ marginBottom: 0 }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Data Emissão</label><input type="datetime-local" style={{ padding: '8px', fontSize: '14px' }} value={ordemData.data_emissao} onChange={(e) => setOrdemData({...ordemData, data_emissao: e.target.value})} /></div>
+              <div className="campo" style={{ marginBottom: 0 }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Valor Total</label><input type="number" style={{ padding: '8px', fontSize: '14px' }} value={ordemData.valor_total} onChange={(e) => setOrdemData({...ordemData, valor_total: e.target.value})} placeholder="0.00" /></div>
             </div>
-            <div className="campo">
-              <label>Posição *</label>
-              <select value={posicaoEstoqueId} onChange={(e) => setPosicaoId(e.target.value)}>
-                <option value="">Selecione</option>
-                {opcoesPosicoes.map(p => <option key={p.id} value={p.id}>{p.cod_localizacao}</option>)}
-              </select>
-            </div>
-            <div className="campo">
-              <label>Quantidade *</label>
-              <input type="number" value={quantidade} onChange={(e) => setQuantidade(e.target.value)} />
-            </div>
-            <div className="campo"><label>Motivo</label><input type="text" value={motivo} onChange={(e) => setMotivo(e.target.value)} /></div>
           </div>
-          <div className="secao-modal direita">
-            <div className="subtitulo-modal">Ordem <button className="btn-primary" onClick={() => setIsCriandoOrdem(true)}>+ Nova</button></div>
-            <div className="campo" style={{ display: 'flex', gap: '5px' }}>
-              <input type="text" placeholder="Nº Ordem" value={buscaOrdem} onChange={(e) => setBuscaOrdem(e.target.value)} />
-              <button className="btn-secondary" onClick={pesquisarOrdem}><Search size={16}/></button>
+
+          {/* COLUNA DA DIREITA: Adição de Itens (Superior) e Lista com Scroll Local Expandido (Inferior) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minHeight: 0 }}>
+            
+            {/* PARTE SUPERIOR: Inclusão rápida de novos itens */}
+            <div className="secao-modal-superior" style={{ background: 'rgba(0,0,0,0.01)', padding: '16px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.04)' }}>
+              <div className="subtitulo-modal" style={{ color: '#db707a', marginBottom: '12px', fontSize: '15px', fontWeight: 'bold' }}>DADOS DO ITEM</div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                <div className="campo" style={{ marginBottom: 0 }}>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Calçado *</label>
+                  <select style={{ padding: '8px', fontSize: '14px' }} value={calcadoId} onChange={(e) => setCalcadoId(e.target.value)}>
+                    <option value="">Selecione</option>
+                    {opcoesCalcados.map(c => <option key={c.id} value={c.id}>{c.modelo}</option>)}
+                  </select>
+                </div>
+
+                <div className="campo" style={{ marginBottom: 0 }}>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Posição *</label>
+                  <select style={{ padding: '8px', fontSize: '14px' }} value={posicaoEstoqueId} onChange={(e) => setPosId(e.target.value)}>
+                    <option value="">Selecione</option>
+                    {opcoesPosicoes.map(p => <option key={p.id} value={p.id}>{p.cod_localizacao}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="campo" style={{ display: 'flex', gap: '14px', alignItems: 'flex-end', marginBottom: 0 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Quantidade *</label>
+                  <input type="number" min="1" style={{ padding: '8px', fontSize: '14px' }} value={quantidade} onChange={(e) => setQuantidade(e.target.value)} placeholder="Ex: 10" />
+                </div>
+                <button type="button" className="btn-primary" style={{ height: '39px', padding: '0 20px', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#db707a' }} onClick={adicionarItemLista}>
+                  <Plus size={16} /> Incluir
+                </button>
+              </div>
             </div>
-            <hr style={{ margin: '15px 0', opacity: 0.2 }} />
-            <div className="campo"><label>Número</label><input disabled={!isCriandoOrdem} value={ordemData.numero_ordem} onChange={(e) => setOrdemData({...ordemData, numero_ordem: e.target.value})} /></div>
-            <div className="campo"><label>Empresa</label><input disabled={!isCriandoOrdem} value={ordemData.empresa} onChange={(e) => setOrdemData({...ordemData, empresa: e.target.value})} /></div>
-            <div className="campo"><label>CNPJ</label><input disabled={!isCriandoOrdem} value={ordemData.cnpj} onChange={(e) => setOrdemData({...ordemData, cnpj: e.target.value})} /></div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <div className="campo"><label>Data</label><input type="datetime-local" disabled={!isCriandoOrdem} value={ordemData.data_emissao} onChange={(e) => setOrdemData({...ordemData, data_emissao: e.target.value})} /></div>
-              <div className="campo"><label>Valor</label><input type="number" disabled={!isCriandoOrdem} value={ordemData.valor_total} onChange={(e) => setOrdemData({...ordemData, valor_total: e.target.value})} /></div>
+
+            {/* PARTE INFERIOR: Lista com Scrollbar Isolada ampliada proporcionalmente */}
+            <div className="secao-modal-inferior" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              <div className="subtitulo-modal" style={{ marginBottom: '10px', fontSize: '15px', fontWeight: 'bold', color: '#db707a' }}>ITENS ADICIONADOS ({itensInclusos.length})</div>
+              
+              <div style={{ height: '280px', overflowY: 'auto', background: '#fff', border: '1px dashed #ddd', borderRadius: '6px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {itensInclusos.length === 0 ? (
+                  <div style={{ margin: 'auto', textAlign: 'center', color: '#999', fontSize: '14px' }}>
+                    Nenhum item adicionado à lista.
+                  </div>
+                ) : (
+                  itensInclusos.map((item) => (
+                    <div 
+                      key={item.idInterno} 
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fdfdfd', border: '1px solid #e9e9e9', padding: '12px 16px', borderRadius: '4px' }}
+                    >
+                      <div style={{ fontSize: '13px', lineHeight: '1.5' }}>
+                        <div><strong>Calçado:</strong> {item.calcadoModelo}</div>
+                        <div style={{ color: '#555' }}>
+                          <span style={{ marginRight: '20px' }}><strong>Posição:</strong> {item.posicaoCodigo}</span>
+                          <span><strong>Qtd:</strong> {item.quantidade}</span>
+                        </div>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => removerItemLista(item.idInterno)} 
+                        style={{ background: 'transparent', border: 'none', color: '#dc3545', cursor: 'pointer', padding: '4px' }}
+                        title="Remover Item"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
+
           </div>
         </div>
-        <div className="modal-footer">
-          <div className="modal-botoes">
-            <button className="btn-secondary" onClick={onFechar}>Cancelar</button>
-            <button className="btn-primary" onClick={salvar} disabled={loading}>{loading ? 'Processando...' : 'Confirmar'}</button>
+
+        <div className="modal-footer" style={{ marginTop: '24px', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '16px' }}>
+          <div className="modal-botoes" style={{ justifyContent: 'flex-end', gap: '10px' }}>
+            <button className="btn-secondary" style={{ padding: '10px 20px', fontSize: '14px' }} onClick={onFechar} disabled={loading}>Cancelar</button>
+            <button className="btn-primary" style={{ padding: '10px 20px', fontSize: '14px', backgroundColor: '#db707a' }} onClick={salvar} disabled={loading || itensInclusos.length === 0}>
+              {loading ? 'Processando...' : `Confirmar (${itensInclusos.length})`}
+            </button>
           </div>
         </div>
       </div>
