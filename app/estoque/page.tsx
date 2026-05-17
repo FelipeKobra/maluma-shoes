@@ -540,13 +540,11 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
       for (let i = 0; i < itensInclusos.length; i++) {
         const item = itensInclusos[i];
         
-        // CORREÇÃO: Garante o envio dos campos em formatos aceitos nativamente, convertendo valor_total para string formatada de número puro
         const ordemPayload: OrdemMovimentacao = {
           data_emissao: ordemData.data_emissao ? new Date(ordemData.data_emissao).toISOString() : new Date().toISOString(),
           empresa: ordemData.empresa,
           cnpj: ordemData.cnpj,
           status: "FINALIZADO",
-          // CORREÇÃO: Passando o valor convertido como string numérica estável para o tipo Decimal(10,2) do backend
           valor_total: ordemData.valor_total ? String(Number(ordemData.valor_total)) : "0.00",
           tipo: tipo,
           id: ordemCriadaRetornada ? Number(ordemCriadaRetornada.id) : undefined,
@@ -565,13 +563,17 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
         const resposta = await estoqueAPI.mover(payload) as MovimentacaoResposta;
         console.log(`[ModalMovimento] Resposta recebida para o item [${i + 1}/${itensInclusos.length}]:`, resposta);
 
-        // Captura a ordem criada na primeira requisição para reutilizar nas próximas
-        if (i === 0 && resposta?.movimentacao) {
-          const resMov = resposta.movimentacao as unknown as { ordemMovimentacao?: OrdemMovimentacao };
-          if (resMov.ordemMovimentacao) {
-            ordemCriadaRetornada = resMov.ordemMovimentacao;
-            console.log('[ModalMovimento] Ordem salva. Reutilizando para os próximos sub-itens:', ordemCriadaRetornada);
+        // Captura de forma segura a ordem se ela vier envelopada ou na raiz
+        if (i === 0 && resposta) {
+          const resObj = resposta as unknown as Record<string, unknown>;
+          const resMov = resposta.movimentacao as unknown as Record<string, unknown> | undefined;
+          
+          if (resMov?.ordemMovimentacao) {
+            ordemCriadaRetornada = resMov.ordemMovimentacao as OrdemMovimentacao;
+          } else if (resObj?.ordemMovimentacao) {
+            ordemCriadaRetornada = resObj.ordemMovimentacao as OrdemMovimentacao;
           }
+          console.log('[ModalMovimento] Ordem salva para reaproveitamento:', ordemCriadaRetornada);
         }
 
         const emitirNotificacao = (msg: string, isAlert: boolean = false) => {
@@ -585,9 +587,11 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
           }));
         };
 
-        emitirNotificacao(`Movimentação de ${resposta.movimentacao.tipo} do item ${item.calcadoModelo} realizada.`);
+        // CORREÇÃO: Fallback seguro caso o backend mude a estrutura do objeto de resposta entre as requisições
+        const tipoDetectado = resposta?.movimentacao?.tipo || (resposta as unknown as { tipo?: string })?.tipo || tipo;
+        emitirNotificacao(`Movimentação de ${tipoDetectado} do item ${item.calcadoModelo} realizada.`);
         
-        if (resposta.alertaEstoqueMin) {
+        if (resposta?.alertaEstoqueMin) {
           console.warn(`[ModalMovimento] Alerta disparado: Estoque baixo na posição ID ${item.posicaoEstoqueId}`);
           emitirNotificacao(`Estoque baixo em ${item.posicaoCodigo}`, true);
         }
