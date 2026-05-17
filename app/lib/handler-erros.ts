@@ -5,7 +5,7 @@ import { ApiError } from './apiError';
 export function handleApiError(error: unknown) {
   if (error instanceof ApiError) {
     return NextResponse.json(
-      { message: error.message, statusCode: error.statusCode },
+      { message: error.message + error.stack, statusCode: error.statusCode },
       { status: error.statusCode }
     );
   }

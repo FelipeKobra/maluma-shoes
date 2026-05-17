@@ -43,12 +43,6 @@ export async function POST(req: Request) {
       throw new ApiError("É necessário preencher o numero da ordem de movimentação", 400);
     }
 
-    const item = await buscarOrdemMovimentacaoPorNumero(body.ordemMovimentacao.numero_ordem);
-    
-    if (item != null) {
-        throw new ApiError("Ordem de movimentação já cadastrada", 400);
-    }
-
     console.log("CRIANDO ORDEM MOVIMENTACAO...");
 
     ordemMovimentacao = await criarOrdemMovimentacao(body.ordemMovimentacao);

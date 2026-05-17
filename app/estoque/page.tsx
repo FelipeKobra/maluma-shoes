@@ -12,7 +12,7 @@ import {
   ClipboardCheck,
   Trash2
 } from 'lucide-react';
-import type { PosicaoEstoque, TipoMovimento, MovimentoPayload, MovimentacaoResposta } from '@/types';
+import type { PosicaoEstoque, TipoMovimento, MovimentoPayload, MovimentacaoResposta, OrdemMovimentacao } from '@/types';
 
 export default function EstoquePage() {
   const [estoque, setEstoque] = useState<PosicaoEstoque[]>([]);
@@ -441,16 +441,6 @@ interface ItemIncluso {
   quantidade: number;
 }
 
-interface OrdemMovimentacaoObjeto {
-  data_emissao: string;
-  empresa: string;
-  cnpj: string;
-  numero_ordem: string;
-  status: string;
-  valor_total: string;
-  tipo: TipoMovimento;
-}
-
 function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar: () => void }) {
   const [opcoesCalcados, setOpcoesCalcados] = useState<{ id: number, modelo: string }[]>([]);
   const [opcoesPosicoes, setOpcoesPosicoes] = useState<{ id: number, cod_localizacao: string }[]>([]);
@@ -460,7 +450,6 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
     data_emissao: '', empresa: '', cnpj: '', numero_ordem: '', status: 'PROCESSADO', valor_total: ''
   });
 
-  // Estados para gerenciar a habilitação do motivo único
   const [habilitarMotivo, setHabilitarMotivo] = useState(false);
   const [motivoGeral, setMotivoGeral] = useState('');
 
@@ -545,32 +534,45 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
 
     console.log(`[ModalMovimento] Iniciando o envio sequencial de ${itensInclusos.length} itens para o backend...`);
 
+    let ordemCriadaRetornada: OrdemMovimentacao | null = null;
+
     try {
       for (let i = 0; i < itensInclusos.length; i++) {
         const item = itensInclusos[i];
         
-        const ordemMovimentacaoMapeada: OrdemMovimentacaoObjeto = {
+        // CORREÇÃO: Garante o envio dos campos em formatos aceitos nativamente, convertendo valor_total para string formatada de número puro
+        const ordemPayload: OrdemMovimentacao = {
           data_emissao: ordemData.data_emissao ? new Date(ordemData.data_emissao).toISOString() : new Date().toISOString(),
           empresa: ordemData.empresa,
           cnpj: ordemData.cnpj,
-          numero_ordem: ordemData.numero_ordem,
           status: "FINALIZADO",
-          valor_total: ordemData.valor_total ? ordemData.valor_total : "0.00",
-          tipo: tipo
+          // CORREÇÃO: Passando o valor convertido como string numérica estável para o tipo Decimal(10,2) do backend
+          valor_total: ordemData.valor_total ? String(Number(ordemData.valor_total)) : "0.00",
+          tipo: tipo,
+          id: ordemCriadaRetornada ? Number(ordemCriadaRetornada.id) : undefined,
+          numero_ordem: ordemCriadaRetornada ? undefined : ordemData.numero_ordem
         };
 
-        // Envia o motivo preenchido caso esteja habilitado; caso contrário, envia string vazia ""
         const payload: MovimentoPayload = {
           calcadoId: item.calcadoId,
           posicaoEstoqueId: item.posicaoEstoqueId,
           quantidade: item.quantidade,
           motivo: habilitarMotivo ? motivoGeral : "",
-          ordemMovimentacao: ordemMovimentacaoMapeada as unknown as { tipo: TipoMovimento }
+          ordemMovimentacao: ordemPayload
         };
 
         console.log(`[ModalMovimento] Enviando item [${i + 1}/${itensInclusos.length}]`, payload);
         const resposta = await estoqueAPI.mover(payload) as MovimentacaoResposta;
         console.log(`[ModalMovimento] Resposta recebida para o item [${i + 1}/${itensInclusos.length}]:`, resposta);
+
+        // Captura a ordem criada na primeira requisição para reutilizar nas próximas
+        if (i === 0 && resposta?.movimentacao) {
+          const resMov = resposta.movimentacao as unknown as { ordemMovimentacao?: OrdemMovimentacao };
+          if (resMov.ordemMovimentacao) {
+            ordemCriadaRetornada = resMov.ordemMovimentacao;
+            console.log('[ModalMovimento] Ordem salva. Reutilizando para os próximos sub-itens:', ordemCriadaRetornada);
+          }
+        }
 
         const emitirNotificacao = (msg: string, isAlert: boolean = false) => {
           window.dispatchEvent(new CustomEvent('nova-notificacao', {
@@ -696,7 +698,7 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
               </div>
             </div>
 
-            {/* PARTE INFERIOR: Lista com Scrollbar Isolada ampliada proporcionalmente */}
+            {/* PARTE INFERIOR: Lista com Scrollbar Isolada */}
             <div className="secao-modal-inferior" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               <div className="subtitulo-modal" style={{ marginBottom: '10px', fontSize: '15px', fontWeight: 'bold', color: '#db707a' }}>ITENS ADICIONADOS ({itensInclusos.length})</div>
               
