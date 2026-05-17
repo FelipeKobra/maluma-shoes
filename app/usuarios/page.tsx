@@ -125,11 +125,13 @@ function ModalUsuario({ editando, onFechar, onSalvar }: ModalUsuarioProps) {
   const [erro, setErro]   = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Validação em tempo de execução para feedback visual instantâneo nos estilos Tailwind
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isEmailValido = email === '' || emailRegex.test(email);
+
   async function salvar() {
     setErro('');
 
-    // Validação do formato de e-mail por Expressão Regular (Regex)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       console.warn('[ModalUsuario] Validação falhou: Formato de e-mail inválido digitado:', email);
       setErro('Por favor, insira um endereço de e-mail válido.');
@@ -173,7 +175,16 @@ function ModalUsuario({ editando, onFechar, onSalvar }: ModalUsuarioProps) {
 
           <div className="campo">
             <label className="block text-sm font-medium mb-1">Email</label>
-            <input className="w-full border rounded p-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@exemplo.com" />
+            <input 
+              className={`w-full border rounded p-2 transition-colors ${!isEmailValido ? 'border-red-500 focus:ring-1 focus:ring-red-500 focus:border-red-500 outline-none' : ''}`} 
+              type="email" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              placeholder="email@exemplo.com" 
+            />
+            {!isEmailValido && (
+              <span className="text-xs text-red-500 mt-1 block">Formato de e-mail inválido</span>
+            )}
           </div>
 
           <div className="campo">
@@ -198,7 +209,11 @@ function ModalUsuario({ editando, onFechar, onSalvar }: ModalUsuarioProps) {
 
         <div className="modal-botoes flex flex-col-reverse sm:flex-row justify-end gap-3 mt-8 pt-4 border-t">
           <button className="btn-secondary w-full sm:w-auto px-6 py-2" onClick={onFechar}>Cancelar</button>
-          <button className="btn-primary w-full sm:w-auto px-6 py-2" onClick={salvar} disabled={loading}>
+          <button 
+            className="btn-primary w-full sm:w-auto px-6 py-2" 
+            onClick={salvar} 
+            disabled={loading || !isEmailValido || email === ''}
+          >
             {loading ? 'Salvando...' : 'Salvar'}
           </button>
         </div>

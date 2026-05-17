@@ -293,6 +293,8 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
             <input 
               className="w-full border rounded p-2" 
               type="number" 
+              min="14"
+              max="50"
               value={form.numeracao ?? ''} 
               onChange={(e) => setcampo('numeracao', e.target.value === '' ? undefined : Number(e.target.value))} 
             />
@@ -325,7 +327,8 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
           <input 
             className="w-full border rounded p-2" 
             type="number" 
-            step="0.01" 
+            step="0.01"
+            min="0.00" 
             value={form.preco_venda instanceof Decimal ? form.preco_venda.toString() : (form.preco_venda ?? '')}
             onChange={(e) => {
               const valor = e.target.value;

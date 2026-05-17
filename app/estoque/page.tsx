@@ -633,7 +633,7 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
             
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
               <div className="campo" style={{ marginBottom: 0 }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Data Emissão</label><input type="datetime-local" style={{ padding: '8px', fontSize: '14px' }} value={ordemData.data_emissao} onChange={(e) => setOrdemData({...ordemData, data_emissao: e.target.value})} /></div>
-              <div className="campo" style={{ marginBottom: 0 }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Valor Total</label><input type="number" style={{ padding: '8px', fontSize: '14px' }} value={ordemData.valor_total} onChange={(e) => setOrdemData({...ordemData, valor_total: e.target.value})} placeholder="0,00" /></div>
+              <div className="campo" style={{ marginBottom: 0 }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Valor Total</label><input type="number" min="0" style={{ padding: '8px', fontSize: '14px' }} value={ordemData.valor_total} onChange={(e) => setOrdemData({...ordemData, valor_total: e.target.value})} placeholder="0,00" /></div>
             </div>
 
             {/* Inclusão do Trigger e do Campo de Motivo */}

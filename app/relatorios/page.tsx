@@ -63,22 +63,6 @@ export default function RelatoriosPage() {
         {/* Grid Responsivo: 1 coluna no mobile, 2 colunas em telas maiores */}
         <div className="cards-grid grid grid-cols-1 md:grid-cols-2 gap-6">
           
-          {/* Relatório de Movimentações */}
-          <div className="card card-relatorio" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px' }}>
-            <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <BarChart3 size={24} strokeWidth={2.5} />
-              <h3 className="font-bold text-lg">Movimentações</h3>
-            </div>
-            <p className="text-gray-600 text-sm">Exportar histórico completo de movimentações de estoque em CSV.</p>
-            <button
-              className="btn-primary w-full"
-              onClick={() => baixarRelatorio('movimentacao')}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 'auto', padding: '10px' }}
-              disabled={msg?.tipo === 'processando'}
-            >
-              <FileDown size={18} /> Baixar CSV
-            </button>
-          </div>
 
           {/* Relatório de Estoque Baixo */}
           <div className="card card-relatorio" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px' }}>
