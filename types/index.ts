@@ -135,7 +135,7 @@ export interface MovimentoPayload {
   posicaoEstoqueId: number;
   quantidade: number;
   motivo?: string;
-  ordemMovimentacao: { tipo: TipoMovimento };
+  ordemMovimentacao: OrdemMovimentacao;
 }
 
 export interface OrdemMovimentacao {

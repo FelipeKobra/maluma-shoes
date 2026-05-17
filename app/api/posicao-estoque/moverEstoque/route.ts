@@ -4,7 +4,7 @@ import { verifyToken } from "@/app/middleware/auth";
 import { authorize } from "@/app/middleware/role";
 import { Usuario } from "@/app/generated/prisma/client";
 import { handleApiError } from "@/app/lib/handler-erros";
-import { buscarOrdemMovimentacao, criarOrdemMovimentacao } from "@/app/services/ordemMovimentacao.service";
+import { buscarOrdemMovimentacao, buscarOrdemMovimentacaoPorNumero, criarOrdemMovimentacao } from "@/app/services/ordemMovimentacao.service";
 import { criarItemMovimentacao } from "@/app/services/itemMovimentacao.service";
 import { buscarCalcado } from "@/app/services/calcados.service";
 import { ApiError } from "@/app/lib/apiError";
@@ -19,7 +19,11 @@ export async function POST(req: Request) {
     
     const body = await req.json();
 
+    console.log("BUSCANDO CALCADO...");
+
     const calcado = await buscarCalcado(body.calcadoId);
+
+    console.log("VALIDANDO USUARIO...");
 
     const usuarioValidado = await prisma.usuario.findUnique({
           where: { id: Number(user.id) },
@@ -27,13 +31,27 @@ export async function POST(req: Request) {
     
     if(usuarioValidado === null) throw new ApiError("Erro ao validar usuario", 500);
 
-    if (body.ordemMovimentacaoId) {
-      ordemMovimentacao = await buscarOrdemMovimentacao(body.ordemMovimentacaoId);
-    } else if (body.ordemMovimentacao) {
-      ordemMovimentacao = await criarOrdemMovimentacao(body.ordemMovimentacao);
-    } else {
-      throw new ApiError("É necessário informar uma Ordem existente ou dados para criar uma nova.", 400);
+    console.log("CHECANDO ORDEM NA REQUISICAO...");
+
+    if (!body.ordemMovimentacao) {
+      throw new ApiError("É necessário informar uma ordem de movimentação", 400);
     }
+
+    console.log("BUSCANDO SE ORDEM JA FOI CADASTRADA...");
+
+    if (!body.ordemMovimentacao.numero_ordem) {
+      throw new ApiError("É necessário preencher o numero da ordem de movimentação", 400);
+    }
+
+    const item = await buscarOrdemMovimentacaoPorNumero(body.ordemMovimentacao.numero_ordem);
+    
+    if (item != null) {
+        throw new ApiError("Ordem de movimentação já cadastrada", 400);
+    }
+
+    console.log("CRIANDO ORDEM MOVIMENTACAO...");
+
+    ordemMovimentacao = await criarOrdemMovimentacao(body.ordemMovimentacao);
 
     const bodyItemMov = {
       preco_unitario: Number(calcado.preco_venda),
@@ -41,18 +59,27 @@ export async function POST(req: Request) {
       calcadosId: calcado.id,
       ordemMovimentacaoId: ordemMovimentacao.id
     }
+
+    console.log("CRIANDO ITEM DE MOVIMENTACAO...");
+
     const itensMovimentacao = await criarItemMovimentacao(bodyItemMov);
+
+    console.log("MONTANDO BODY PARA MOVIMENTAR...");
 
     const bodyMov = {
       itensMovimentacaoId: itensMovimentacao.id,
       posicaoEstoqueId: body.posicaoEstoqueId,
       quantidade: body.quantidade,
       tipo: ordemMovimentacao.tipo as "ENTRADA" | "SAIDA",
-      motivo: body.motivo,
+      motivo: body.motivo === "" ? (ordemMovimentacao.tipo === "ENTRADA" ? "ABASTECIMENTO" : "VENDA") : body.motivo,
       responsavel: usuarioValidado.nome
     }
 
+    console.log("MOVIMENTANDO ESTOQUE...");
+
     const result = await movimentarEstoque(bodyMov);
+
+    console.log("RETORNANDO RESPOSTA...");
 
     return NextResponse.json(result);
   } catch (error) {

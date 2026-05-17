@@ -460,6 +460,10 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
     data_emissao: '', empresa: '', cnpj: '', numero_ordem: '', status: 'PROCESSADO', valor_total: ''
   });
 
+  // Estados para gerenciar a habilitação do motivo único
+  const [habilitarMotivo, setHabilitarMotivo] = useState(false);
+  const [motivoGeral, setMotivoGeral] = useState('');
+
   const [calcadoId, setCalcadoId] = useState('');
   const [posicaoEstoqueId, setPosId] = useState('');
   const [quantidade, setQuantidade] = useState('');
@@ -550,16 +554,17 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
           empresa: ordemData.empresa,
           cnpj: ordemData.cnpj,
           numero_ordem: ordemData.numero_ordem,
-          status: ordemData.status,
-          valor_total: ordemData.valor_total ? Number(ordemData.valor_total).toFixed(2) : "0.00",
+          status: "FINALIZADO",
+          valor_total: ordemData.valor_total ? ordemData.valor_total : "0.00",
           tipo: tipo
         };
 
+        // Envia o motivo preenchido caso esteja habilitado; caso contrário, envia string vazia ""
         const payload: MovimentoPayload = {
           calcadoId: item.calcadoId,
           posicaoEstoqueId: item.posicaoEstoqueId,
           quantidade: item.quantidade,
-          motivo: "",
+          motivo: habilitarMotivo ? motivoGeral : "",
           ordemMovimentacao: ordemMovimentacaoMapeada as unknown as { tipo: TipoMovimento }
         };
 
@@ -598,14 +603,13 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
 
   return (
     <div className="modal" onClick={(e) => e.target === e.currentTarget && onFechar()}>
-      {/* Modal expandido proporcionalmente para 960px com espaçamentos internos ampliados */}
       <div className="modal-box modal-largo" style={{ width: '960px', padding: '28px', display: 'flex', flexDirection: 'column' }}>
         <div className="modal-header" style={{ marginBottom: '20px' }}><h2 style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.5px' }}>MOVIMENTAR ESTOQUE</h2></div>
         {erro && <div className="msg-erro" style={{ margin: '0 0 16px 0', padding: '12px', fontSize: '14px' }}>{erro}</div>}
         
         <div className="modal-content" style={{ display: 'grid', gridTemplateColumns: '1fr 1.25fr', gap: '32px', minHeight: 0 }}>
           
-          {/* COLUNA DA ESQUERDA: Dados estruturais da Ordem */}
+          {/* COLUNA DA ESQUERDA: Dados estruturais da Ordem e o Motivo Geral */}
           <div className="secao-modal" style={{ borderRight: '1px solid rgba(0,0,0,0.08)', paddingRight: '32px' }}>
             <div className="subtitulo-modal" style={{ marginBottom: '16px', fontSize: '15px', fontWeight: 'bold', color: '#db707a' }}>DADOS DA ORDEM</div>
             
@@ -617,13 +621,42 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
               </select>
             </div>
             
-            <div className="campo" style={{ marginBottom: '14px' }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Número da Ordem *</label><input style={{ padding: '8px', fontSize: '14px' }} value={ordemData.numero_ordem} onChange={(e) => setOrdemData({...ordemData, numero_ordem: e.target.value})}  /></div>
+            <div className="campo" style={{ marginBottom: '14px' }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Número da Ordem *</label><input style={{ padding: '8px', fontSize: '14px' }} value={ordemData.numero_ordem} onChange={(e) => setOrdemData({...ordemData, numero_ordem: e.target.value})} placeholder="Ex: NF-1234" /></div>
             <div className="campo" style={{ marginBottom: '14px' }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Empresa / Fornecedor</label><input style={{ padding: '8px', fontSize: '14px' }} value={ordemData.empresa} onChange={(e) => setOrdemData({...ordemData, empresa: e.target.value})} placeholder="Razão Social" /></div>
             <div className="campo" style={{ marginBottom: '14px' }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>CNPJ</label><input style={{ padding: '8px', fontSize: '14px' }} value={ordemData.cnpj} onChange={(e) => setOrdemData({...ordemData, cnpj: e.target.value})} placeholder="00.000.000/0001-00" /></div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
               <div className="campo" style={{ marginBottom: 0 }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Data Emissão</label><input type="datetime-local" style={{ padding: '8px', fontSize: '14px' }} value={ordemData.data_emissao} onChange={(e) => setOrdemData({...ordemData, data_emissao: e.target.value})} /></div>
-              <div className="campo" style={{ marginBottom: 0 }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Valor Total</label><input type="number" style={{ padding: '8px', fontSize: '14px' }} value={ordemData.valor_total} onChange={(e) => setOrdemData({...ordemData, valor_total: e.target.value})} placeholder="0.00" /></div>
+              <div className="campo" style={{ marginBottom: 0 }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Valor Total</label><input type="number" style={{ padding: '8px', fontSize: '14px' }} value={ordemData.valor_total} onChange={(e) => setOrdemData({...ordemData, valor_total: e.target.value})} placeholder="0,00" /></div>
+            </div>
+
+            {/* Inclusão do Trigger e do Campo de Motivo */}
+            <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                <input 
+                  type="checkbox" 
+                  id="chk-motivo" 
+                  checked={habilitarMotivo}
+                  onChange={(e) => {
+                    setHabilitarMotivo(e.target.checked);
+                    if(!e.target.checked) setMotivoGeral('');
+                  }}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                <label htmlFor="chk-motivo" style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: 0, cursor: 'pointer' }}>
+                  Informar motivo para esta movimentação?
+                </label>
+              </div>
+              <div className="campo" style={{ marginBottom: 0 }}>
+                <input 
+                  type="text" 
+                  disabled={!habilitarMotivo}
+                  value={motivoGeral}
+                  onChange={(e) => setMotivoGeral(e.target.value)}
+                  placeholder={habilitarMotivo ? "Ex: Devolução de cliente, acerto cadastral..." : "Ative a opção acima para digitar"}
+                  style={{ padding: '8px', fontSize: '14px' }}
+                />
+              </div>
             </div>
           </div>
 
@@ -706,7 +739,7 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
           <div className="modal-botoes" style={{ justifyContent: 'flex-end', gap: '10px' }}>
             <button className="btn-secondary" style={{ padding: '10px 20px', fontSize: '14px' }} onClick={onFechar} disabled={loading}>Cancelar</button>
             <button className="btn-primary" style={{ padding: '10px 20px', fontSize: '14px', backgroundColor: '#db707a' }} onClick={salvar} disabled={loading || itensInclusos.length === 0}>
-              {loading ? 'Processando...' : `Confirmar (${itensInclusos.length})`}
+              {loading ? 'Processando...' : `Confirmar Lote (${itensInclusos.length})`}
             </button>
           </div>
         </div>
