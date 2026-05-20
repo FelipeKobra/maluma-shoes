@@ -49,7 +49,7 @@ export interface MovimentacaoDB {
   saldo_posterior?: number | null;
   motivo?: string | null;
   posicaoEstoque: PosicaoEstoqueRelatorio | null;
-  itensMovimentacao: ItemMovimentacaoRelatorio[] | ItemMovimentacaoRelatorio;
+  itensMovimentacao?: ItemMovimentacaoRelatorio[] | ItemMovimentacaoRelatorio | null;
 }
 
 export interface MetaRelatorio {
