@@ -8,6 +8,7 @@ type InventarioInput = {
   responsavel: string;
 };
 
+
 export async function realizarInventario(data: InventarioInput) {
   return await prisma.$transaction(async (tx) => {
     const estoque = await tx.posicaoEstoque.findUnique({

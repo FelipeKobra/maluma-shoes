@@ -25,6 +25,8 @@ export async function POST(req: NextRequest) {
           
     if(usuarioValidado === null) throw new ApiError("Erro ao validar usuario", 500);
 
+
+    
     const dados = {
       ...body,
       responsavel: usuarioValidado.nome
