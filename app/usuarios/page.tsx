@@ -110,7 +110,6 @@ export default function UsuariosPage() {
   );
 }
 
-// ---- Modal Atualizado e Responsivo ----
 interface ModalUsuarioProps {
   editando: { id: number; nome: string; email: string; role: UserRole } | null;
   onFechar: () => void;
@@ -125,7 +124,6 @@ function ModalUsuario({ editando, onFechar, onSalvar }: ModalUsuarioProps) {
   const [erro, setErro]   = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Validação em tempo de execução para feedback visual instantâneo nos estilos Tailwind
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmailValido = email === '' || emailRegex.test(email);
 

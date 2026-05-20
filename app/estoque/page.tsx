@@ -20,7 +20,6 @@ export default function EstoquePage() {
   const [modalAberto, setModalAberto] = useState(false);
   const [modalCriarAberto, setModalCriarAberto] = useState(false);
   
-  // Estados para o novo Modal de Inventário
   const [modalInventarioAberto, setModalInventarioAberto] = useState(false);
   const [posicaoSelecionada, setPosicaoSelecionada] = useState<PosicaoEstoque | null>(null);
 
@@ -141,7 +140,6 @@ export default function EstoquePage() {
         </div>
       </main>
 
-      {/* Modal de Movimentação Padrão */}
       {modalAberto && (
         <ModalMovimento
           onFechar={() => setModalAberto(false)}
@@ -149,7 +147,6 @@ export default function EstoquePage() {
         />
       )}
 
-      {/* Modal de Criação de Posição */}
       {modalCriarAberto && (
         <ModalCriarPosicao 
           onFechar={() => setModalCriarAberto(false)}
@@ -157,7 +154,6 @@ export default function EstoquePage() {
         />
       )}
 
-      {/* NOVO: Modal de Inventário / Ajuste */}
       {modalInventarioAberto && posicaoSelecionada && (
         <ModalInventario 
           posicao={posicaoSelecionada}
@@ -563,7 +559,6 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
         const resposta = await estoqueAPI.mover(payload) as MovimentacaoResposta;
         console.log(`[ModalMovimento] Resposta recebida para o item [${i + 1}/${itensInclusos.length}]:`, resposta);
 
-        // Captura de forma segura a ordem se ela vier envelopada ou na raiz
         if (i === 0 && resposta) {
           const resObj = resposta as unknown as Record<string, unknown>;
           const resMov = resposta.movimentacao as unknown as Record<string, unknown> | undefined;
@@ -587,7 +582,6 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
           }));
         };
 
-        // CORREÇÃO: Fallback seguro caso o backend mude a estrutura do objeto de resposta entre as requisições
         const tipoDetectado = resposta?.movimentacao?.tipo || (resposta as unknown as { tipo?: string })?.tipo || tipo;
         emitirNotificacao(`Movimentação de ${tipoDetectado} do item ${item.calcadoModelo} realizada.`);
         
@@ -615,7 +609,6 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
         
         <div className="modal-content" style={{ display: 'grid', gridTemplateColumns: '1fr 1.25fr', gap: '32px', minHeight: 0 }}>
           
-          {/* COLUNA DA ESQUERDA: Dados estruturais da Ordem e o Motivo Geral */}
           <div className="secao-modal" style={{ borderRight: '1px solid rgba(0,0,0,0.08)', paddingRight: '32px' }}>
             <div className="subtitulo-modal" style={{ marginBottom: '16px', fontSize: '15px', fontWeight: 'bold', color: '#db707a' }}>DADOS DA ORDEM</div>
             
@@ -636,7 +629,6 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
               <div className="campo" style={{ marginBottom: 0 }}><label style={{ fontSize: '13px', fontWeight: 'bold', marginBottom: '6px' }}>Valor Total</label><input type="number" min="0" style={{ padding: '8px', fontSize: '14px' }} value={ordemData.valor_total} onChange={(e) => setOrdemData({...ordemData, valor_total: e.target.value})} placeholder="0,00" /></div>
             </div>
 
-            {/* Inclusão do Trigger e do Campo de Motivo */}
             <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '14px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 <input 
@@ -666,10 +658,8 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
             </div>
           </div>
 
-          {/* COLUNA DA DIREITA: Adição de Itens (Superior) e Lista com Scroll Local Expandido (Inferior) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minHeight: 0 }}>
             
-            {/* PARTE SUPERIOR: Inclusão rápida de novos itens */}
             <div className="secao-modal-superior" style={{ background: 'rgba(0,0,0,0.01)', padding: '16px', borderRadius: '6px', border: '1px solid rgba(0,0,0,0.04)' }}>
               <div className="subtitulo-modal" style={{ color: '#db707a', marginBottom: '12px', fontSize: '15px', fontWeight: 'bold' }}>DADOS DO ITEM</div>
               
@@ -702,7 +692,6 @@ function ModalMovimento({ onFechar, onSalvar }: { onFechar: () => void; onSalvar
               </div>
             </div>
 
-            {/* PARTE INFERIOR: Lista com Scrollbar Isolada */}
             <div className="secao-modal-inferior" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
               <div className="subtitulo-modal" style={{ marginBottom: '10px', fontSize: '15px', fontWeight: 'bold', color: '#db707a' }}>ITENS ADICIONADOS ({itensInclusos.length})</div>
               

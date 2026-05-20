@@ -18,7 +18,7 @@ export interface DeleteResposta {
 }
 
 function getToken(): string | null {
-  // typeof window === 'undefined' verifica se estamos no servidor (Next.js SSR)
+
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('token');
 }
@@ -36,14 +36,13 @@ async function apiFetch<T>(path: string, options: RequestInit & { _csv?: boolean
 
   const response = await fetch(`${API}${path}`, { ...options, headers });
 
-  // lib/api.ts (ou onde estiver seu apiFetch)
+ 
 
 if (response.status === 401) {
   if (typeof window !== 'undefined') {
-    // Limpa o localStorage
+   
     localStorage.removeItem('token');
     
-    // ADICIONE ISSO: Limpa o Cookie de autenticação
     document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     
     window.location.href = '/login';
@@ -51,7 +50,7 @@ if (response.status === 401) {
   throw new Error('Não autorizado');
 }
 
-  // Para CSV, retornamos a Response bruta
+
   if (options._csv) return response as unknown as T;
 
   const text = await response.text();
@@ -66,19 +65,21 @@ if (response.status === 401) {
   return data as T;
 }
 
-// ---- APIs específicas ----
+
 
 export const calcadosAPI = {
   listar: () => apiFetch<Calcado[]>('/api/calcados'),
+  
   buscarPorId: (id: number) => apiFetch<Calcado>(`/api/calcados/${id}`),
+  
   criar: (dados: Partial<Calcado>) => {
-    console.log("DADOS ENVIADOS: " + dados);
-    apiFetch<Calcado>('/api/calcados', { method: 'POST', body: JSON.stringify(dados) })
+    console.log("DADOS ENVIADOS: ", dados);
+    return apiFetch<Calcado>('/api/calcados', { method: 'POST', body: JSON.stringify(dados) });
   },
+  
   atualizar: (id: number, dados: Partial<Calcado>) =>
     apiFetch<Calcado>(`/api/calcados/${id}`, { method: 'PUT', body: JSON.stringify(dados) }),
   
-  // TIPADO CORRETAMENTE: Casado com o retorno estruturado do seu backend
   deletar: (id: number) =>
     apiFetch<DeleteResposta>(`/api/calcados/${id}`, { method: 'DELETE' }),
 };
@@ -112,7 +113,6 @@ export const estoqueAPI = {
     }),
 };
 
-// Defina uma interface para os filtros para manter o TypeScript feliz
 interface FiltrosHistorico {
   tipo?: string;
   responsavel?: string;
@@ -124,12 +124,12 @@ interface FiltrosHistorico {
 }
 
 export const movimentacoesAPI = {
-  // Agora aceita um objeto opcional de filtros
+
   historico: (filtros?: FiltrosHistorico) => {
     const params = new URLSearchParams();
     
     if (filtros) {
-      // Percorre o objeto e adiciona apenas o que não for undefined
+      
       Object.entries(filtros).forEach(([key, value]) => {
         if (value) params.append(key, value.toString());
       });

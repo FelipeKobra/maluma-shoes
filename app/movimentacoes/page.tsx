@@ -50,7 +50,6 @@ export default function MovimentacoesPage() {
 
   const inicializado = useRef(false);
 
-  // Verifica de forma segura se há algum filtro digitado ou selecionado
   const possuiFiltrosAtivos = Boolean(
     filtros.tipo || filtros.responsavel || filtros.motivo || filtros.dataInicio || filtros.dataFim
   );
@@ -147,7 +146,6 @@ export default function MovimentacoesPage() {
           <h1 className="page-title text-2xl font-bold">Movimentações</h1>
         </div>
 
-        {/* Filtros Responsivos */}
         <div className="card mb-6 p-4">
           <div className="card-title flex items-center gap-2 text-sm mb-4">
             <Search size={18} /> Filtrar Resultados
@@ -222,7 +220,6 @@ export default function MovimentacoesPage() {
           </div>
         </div>
 
-        {/* Tabela com Scroll Horizontal */}
         <div className="card overflow-hidden">
           <div className="card-title flex items-center justify-between font-bold mb-4">
             <div className="flex items-center gap-2">
@@ -288,7 +285,6 @@ export default function MovimentacoesPage() {
                 </table>
               </div>
 
-              {/* Paginação Adaptável */}
               <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6 pt-4 border-t border-gray-100">
                 <div className="flex items-center gap-4">
                   <button

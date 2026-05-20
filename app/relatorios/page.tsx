@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { relatoriosAPI } from '@/lib/api';
-// Importação dos ícones para os cards e botões
 import { 
   BarChart3, 
   AlertTriangle, 
@@ -22,7 +21,6 @@ export default function RelatoriosPage() {
       await relatoriosAPI.baixar(tipo);
       setMsg({ texto: 'Download iniciado com sucesso!', tipo: 'sucesso' });
       
-      // Limpa a mensagem após 3 segundos
       setTimeout(() => setMsg(null), 3000);
     } catch (err: unknown) {
       setMsg({
@@ -40,7 +38,6 @@ export default function RelatoriosPage() {
           <h1 className="page-title text-2xl font-bold">Relatórios</h1>
         </div>
 
-        {/* Feedback de Mensagem Padronizado */}
         {msg && (
           <div 
             className={msg.tipo === 'sucesso' ? 'msg-sucesso' : 'msg-erro'}
@@ -60,11 +57,9 @@ export default function RelatoriosPage() {
           </div>
         )}
 
-        {/* Grid Responsivo: 1 coluna no mobile, 2 colunas em telas maiores */}
         <div className="cards-grid grid grid-cols-1 md:grid-cols-2 gap-6">
           
 
-          {/* Relatório de Estoque Baixo */}
           <div className="card card-relatorio" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '20px' }}>
             <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <AlertTriangle size={24} strokeWidth={2.5} />

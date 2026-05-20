@@ -50,17 +50,14 @@ export default function DashboardPage() {
   const { totalCalcados, totalEstoque, totalMovimentacoes, alertas, minimo, carregando } = dashboardData;
 
   return (
-    // 'flex-col md:flex-row' garante que no celular a sidebar e o conteúdo fiquem empilhados
     <div className="layout flex flex-col md:flex-row min-h-screen">
       <Sidebar />
       
-      {/* 'w-full overflow-x-hidden' evita que o conteúdo vaze lateralmente no mobile */}
       <main className="main flex-1 p-4 md:p-8 w-full overflow-x-hidden">
         <div className="page-header mb-6">
           <h1 className="page-title text-2xl font-bold">Dashboard</h1>
         </div>
 
-        {/* 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' cria a responsividade dos cards */}
         <div className="cards-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatCard Icon={Footprints} valor={totalCalcados} label="Calçados Cadastrados" />
           <StatCard Icon={Archive} valor={totalEstoque} label="Posições de Estoque" />
@@ -77,7 +74,6 @@ export default function DashboardPage() {
           {carregando ? (
             <p className="loading-text p-4">Carregando...</p>
           ) : minimo.length > 0 ? (
-            /* 'overflow-x-auto' permite que a tabela seja "arrastada" para o lado no celular */
             <div className="tabela-wrapper overflow-x-auto border rounded-lg">
               <table className="min-w-full border-collapse">
                 <thead>
@@ -120,7 +116,6 @@ interface StatCardProps {
 
 function StatCard({ Icon, valor, label, alerta }: StatCardProps) {
   return (
-    // 'flex items-center' garante que no mobile os itens fiquem alinhados corretamente
     <div className={`card card-stat flex items-center p-4 gap-4 ${alerta ? 'card-alerta' : ''}`}>
       <span className="stat-icon p-3 rounded-full">
         <Icon size={24} strokeWidth={2} />

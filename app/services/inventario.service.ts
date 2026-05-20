@@ -41,7 +41,7 @@ export async function realizarInventario(data: InventarioInput) {
         saldo_anterior: quantidadeSistema,
         saldo_posterior: data.quantidadeFisica,
         responsavel: data.responsavel,
-        itensMovimentacaoId: 0,
+        itensMovimentacaoId: null,
         posicaoEstoqueId: data.posicaoEstoqueId,
       },
     });

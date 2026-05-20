@@ -72,17 +72,17 @@ model PosicaoEstoque {
 }
 
 model Movimentacao {
-  id                  Int               @id @default(autoincrement())
+  id                  Int                @id @default(autoincrement())
   data_hora           DateTime
-  tipo                String            @db.VarChar(45)
-  motivo              String            @db.VarChar(100)
+  tipo                String             @db.VarChar(45)
+  motivo              String             @db.VarChar(100)
   saldo_anterior      Int
   saldo_posterior     Int
-  responsavel         String            @db.VarChar(100)
-  itensMovimentacaoId Int
+  responsavel         String             @db.VarChar(100)
+  itensMovimentacaoId Int?
   posicaoEstoqueId    Int
-  itensMovimentacao   ItensMovimentacao @relation(fields: [itensMovimentacaoId], references: [id])
-  posicaoEstoque      PosicaoEstoque    @relation(fields: [posicaoEstoqueId], references: [id])
+  itensMovimentacao   ItensMovimentacao? @relation(fields: [itensMovimentacaoId], references: [id], onDelete: Restrict)
+  posicaoEstoque      PosicaoEstoque     @relation(fields: [posicaoEstoqueId], references: [id])
 
   @@schema("maluma")
 }

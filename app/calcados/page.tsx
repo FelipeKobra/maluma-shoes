@@ -56,18 +56,15 @@ export default function CalcadosPage() {
   async function deletarCalcado(id: number) {
     if (!confirm('Tem certeza que deseja excluir este calçado?')) return;
     
-    // LOG: Início da tentativa de exclusão
     console.log(`[Deletar Calçado] Tentando excluir calçado com ID: ${id}`);
     
     try {
       await calcadosAPI.deletar(id);
       
-      // LOG: Sucesso na exclusão
       console.log(`[Deletar Calçado] Calçado com ID: ${id} deletado com sucesso.`);
       
       await carregarCalcados();
     } catch (err: unknown) {
-      // LOG: Falha na exclusão
       console.error(`[Deletar Calçado] Erro ao tentar deletar o calçado com ID: ${id}. Detalhes:`, err);
       
       alert('Erro ao excluir: ' + (err instanceof Error ? err.message : 'Erro'));
@@ -185,7 +182,7 @@ export default function CalcadosPage() {
   );
 }
 
-// ---- Modal com Tipagem Estrita e Mecanismo de Logs ----
+
 interface ModalCalcadoProps {
   editandoId: number | null;
   onFechar: () => void;
@@ -205,7 +202,6 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
 
   useEffect(() => {
     if (editandoId) {
-      // LOG: Buscando dados para edição
       console.log(`[Editar Calçado] Carregando dados do calçado ID: ${editandoId}`);
       
       calcadosAPI.buscarPorId(editandoId).then((dados) => {
@@ -221,10 +217,8 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
           status: (dados.status as StatusFormulario) || 'ATIVO',
         });
         
-        // LOG: Sucesso ao carregar os dados no formulário
         console.log(`[Editar Calçado] Dados do calçado ID: ${editandoId} carregados com sucesso:`, dados);
       }).catch((err) => {
-        // LOG: Falha ao carregar os dados do ID informado
         console.error(`[Editar Calçado] Erro ao carregar os dados do calçado ID: ${editandoId}. Detalhes:`, err);
         setErro('Erro ao carregar dados.');
       });
@@ -242,12 +236,10 @@ function ModalCalcado({ editandoId, onFechar, onSalvar }: ModalCalcadoProps) {
     const contextoLog = editandoId ? '[Editar Calçado - Salvar]' : '[Adicionar Calçado - Salvar]';
     
     try {
-      // CORREÇÃO CRUCIAL: Remove do payload tudo o que for undefined, null OU string vazia ("")
       const payload = Object.fromEntries(
         Object.entries(form).filter(([_, v]) => v !== undefined && v !== null && v !== '')
       );
 
-      // LOG: Verifique no console do seu navegador se as chaves vazias sumiram do objeto!
       console.log(`${contextoLog} Gerando payload limpo para envio:`, payload);
 
       if (!payload.modelo || !payload.marca || !payload.preco_venda) {
