@@ -107,11 +107,18 @@ export const estoqueAPI = {
     }),
 
   realizarInventario: (dados: { posicaoEstoqueId: number; quantidadeFisica: number; motivo?: string }) =>
-    apiFetch<void>('/api/inventario', {
+    apiFetch<EstoqueResponse>('/api/inventario', {
       method: 'POST',
       body: JSON.stringify(dados)
     }),
 };
+
+interface EstoqueResponse {
+  divergencia: number;
+  quantidadeSistema: number;
+  quantidadeFisica: number;
+  motivo: string;
+}
 
 interface FiltrosHistorico {
   tipo?: string;
