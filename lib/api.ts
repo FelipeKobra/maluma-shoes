@@ -92,13 +92,12 @@ export const estoqueAPI = {
     apiFetch<PosicaoEstoque[]>('/api/posicao-estoque/minimo'),
     
   mover: (dados: MovimentoPayload) => {
-  console.log("MOVIMENTO PAYLOAD: ", dados);
-  return apiFetch<MovimentacaoResposta>('/api/posicao-estoque/moverEstoque', { 
-    method: 'POST', 
-    body: JSON.stringify(dados) 
-  });
-},
-   
+    console.log("MOVIMENTO PAYLOAD: ", dados);
+    return apiFetch<MovimentacaoResposta>('/api/posicao-estoque/moverEstoque', { 
+      method: 'POST', 
+      body: JSON.stringify(dados) 
+    });
+  },
 
   criar: (dados: CriarPosicaoPayload) =>
     apiFetch<PosicaoEstoque>('/api/posicao-estoque', { 

@@ -4,8 +4,8 @@ import { ApiError } from "../lib/apiError";
 type InventarioInput = {
   posicaoEstoqueId: number;
   quantidadeFisica: number;
-  responsavel: string;
   motivo?: string;
+  responsavel: string;
 };
 
 export async function realizarInventario(data: InventarioInput) {

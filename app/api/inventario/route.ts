@@ -7,6 +7,8 @@ import { handleApiError } from "@/app/lib/handler-erros";
 import { prisma } from "@/app/lib/prisma";
 import { ApiError } from "@/app/lib/apiError";
 
+
+
 export async function POST(req: NextRequest) {
   try {
     const user = await verifyToken(req) as Usuario; 
@@ -14,15 +16,18 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
 
+    console.log("BODY: " + body); 
+
     const usuarioValidado = await prisma.usuario.findUnique({
-              where: { id: Number(user.id) },
-          });
-        
+        where: { id: Number(user.id) },
+    });
+
+          
     if(usuarioValidado === null) throw new ApiError("Erro ao validar usuario", 500);
 
     const dados = {
       ...body,
-      usuarioValidado,
+      responsavel: usuarioValidado.nome
     }
 
     const result = await realizarInventario(dados);
